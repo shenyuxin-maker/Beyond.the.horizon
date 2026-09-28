@@ -1,1 +1,169 @@
+<!DOCTYPE html>
 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beyond the Horizon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <canvas id="gameCanvas"></canvas>
+
+```
+<div id="titleScreen" class="screen active">
+  <div class="title-wrap">
+    <h1>BEYOND THE HORIZON</h1>
+    <p>PRESS ANY KEY / CLICK TO CONTINUE</p>
+  </div>
+</div>
+
+<div id="accountScreen" class="screen">
+  <div class="panel">
+    <h2>ACCOUNT</h2>
+
+    <div class="account-tabs">
+      <button id="loginTab" class="selected">LOG IN</button>
+      <button id="signupTab">SIGN UP</button>
+    </div>
+
+    <div id="loginForm">
+      <input id="loginUser" type="text" placeholder="Username or Email">
+      <input id="loginPassword" type="password" placeholder="Password">
+      <button id="loginButton">LOG IN</button>
+      <button class="text-button" id="forgotButton">Forgot Password?</button>
+    </div>
+
+    <div id="signupForm" class="hidden">
+      <input id="signupUsername" type="text" placeholder="Username">
+      <input id="signupEmail" type="email" placeholder="Email">
+      <input id="signupPassword" type="password" placeholder="Password">
+      <input id="signupConfirm" type="password" placeholder="Confirm Password">
+      <button id="signupButton">CREATE ACCOUNT</button>
+    </div>
+
+    <p id="accountMessage"></p>
+  </div>
+</div>
+
+<div id="mainMenu" class="screen">
+  <div class="menu-panel">
+    <h1>BEYOND THE HORIZON</h1>
+    <button id="continueButton" disabled>CONTINUE</button>
+    <button id="newGameButton">NEW GAME</button>
+    <button id="settingsButton">SETTINGS</button>
+    <button id="logoutButton">LOG OUT</button>
+  </div>
+</div>
+
+<div id="characterCreation" class="screen">
+  <div class="panel creation-panel">
+    <h2>CHARACTER CREATION</h2>
+
+    <label>
+      Gender
+      <select id="gender">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </label>
+
+    <label>
+      Skin Tone
+      <select id="skinTone">
+        <option value="1">Tone 1</option>
+        <option value="2">Tone 2</option>
+        <option value="3">Tone 3</option>
+        <option value="4">Tone 4</option>
+      </select>
+    </label>
+
+    <label>
+      Eye Color
+      <select id="eyeColor">
+        <option value="brown">Brown</option>
+        <option value="blue">Blue</option>
+        <option value="green">Green</option>
+        <option value="gray">Gray</option>
+      </select>
+    </label>
+
+    <label>
+      Hairstyle
+      <select id="hairstyle">
+        <option value="1">Style 1</option>
+        <option value="2">Style 2</option>
+        <option value="3">Style 3</option>
+      </select>
+    </label>
+
+    <button id="confirmCharacter">CONFIRM</button>
+  </div>
+</div>
+
+<div id="pauseMenu" class="overlay hidden">
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <button id="resumeButton">RESUME</button>
+    <button id="saveButton">SAVE</button>
+    <button id="loadButton">LOAD</button>
+    <button id="pauseSettingsButton">SETTINGS</button>
+    <button id="exitButton">EXIT TO MAIN MENU</button>
+  </div>
+</div>
+
+<div id="tabMenu" class="overlay hidden">
+  <div class="tab-panel">
+    <div class="tab-buttons">
+      <button data-page="equipment" class="selected">EQUIPMENT</button>
+      <button data-page="items">ITEMS</button>
+      <button data-page="map">MAP</button>
+    </div>
+
+    <div id="equipmentPage" class="tab-page">
+      <h2>EQUIPMENT</h2>
+      <p id="equipmentText"></p>
+    </div>
+
+    <div id="itemsPage" class="tab-page hidden">
+      <h2>ITEMS</h2>
+      <p id="itemsText"></p>
+    </div>
+
+    <div id="mapPage" class="tab-page hidden">
+      <h2>MAP</h2>
+      <p>CENTRAL CITY</p>
+      <p>▲ YOU</p>
+      <p>Explored Islands: 1</p>
+    </div>
+  </div>
+</div>
+
+<div id="hud">
+  <div id="hpHud">HP <span id="hpBar">██████████</span> <span id="hpText">100 / 100</span></div>
+  <div id="dayHud">DAY 1</div>
+  <div id="timeHud">08:00</div>
+  <div id="weaponHud">SWORD</div>
+  <div id="interactionPrompt"></div>
+</div>
+
+<div id="dialogue" class="overlay hidden">
+  <div class="dialogue-box">
+    <strong id="dialogueName"></strong>
+    <p id="dialogueText"></p>
+    <button id="dialogueContinue">CONTINUE</button>
+  </div>
+</div>
+
+<div id="deathScreen" class="screen hidden">
+  <div class="death-text">YOU DIED</div>
+</div>
+```
+
+  </div>
+
+  <script src="game.js"></script>
+
+</body>
+</html>
