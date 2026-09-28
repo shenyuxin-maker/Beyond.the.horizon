@@ -1,1 +1,282 @@
+* {
+  box-sizing: border-box;
+  }
 
+html,
+body {
+margin: 0;
+width: 100%;
+height: 100%;
+overflow: hidden;
+background: #111;
+color: #fff;
+font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select {
+font: inherit;
+}
+
+button {
+cursor: pointer;
+}
+
+button:disabled {
+opacity: 0.35;
+cursor: not-allowed;
+}
+
+#game {
+position: relative;
+width: 100vw;
+height: 100vh;
+overflow: hidden;
+background: #111;
+}
+
+#gameCanvas {
+display: block;
+width: 100%;
+height: 100%;
+background: #111;
+}
+
+.screen,
+.overlay {
+position: absolute;
+inset: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.screen {
+background: #111;
+z-index: 20;
+}
+
+.screen.hidden,
+.overlay.hidden,
+.hidden {
+display: none !important;
+}
+
+.title-wrap {
+text-align: center;
+}
+
+.title-wrap h1 {
+font-size: clamp(32px, 6vw, 72px);
+letter-spacing: 6px;
+margin-bottom: 30px;
+}
+
+.title-wrap p {
+opacity: 0.7;
+animation: blink 1.4s infinite;
+}
+
+@keyframes blink {
+50% {
+opacity: 0.25;
+}
+}
+
+.panel,
+.menu-panel,
+.tab-panel,
+.dialogue-box {
+background: rgba(20, 20, 20, 0.96);
+border: 1px solid #666;
+padding: 30px;
+width: min(420px, 90vw);
+}
+
+.panel h2,
+.menu-panel h1 {
+text-align: center;
+margin-top: 0;
+}
+
+.menu-panel {
+display: flex;
+flex-direction: column;
+gap: 14px;
+}
+
+.menu-panel h1 {
+font-size: 26px;
+margin-bottom: 18px;
+}
+
+button {
+min-height: 44px;
+border: 1px solid #777;
+background: #242424;
+color: white;
+padding: 10px 18px;
+}
+
+button:hover:not(:disabled) {
+background: #363636;
+}
+
+.account-tabs,
+.tab-buttons {
+display: flex;
+gap: 8px;
+margin-bottom: 20px;
+}
+
+.account-tabs button,
+.tab-buttons button {
+flex: 1;
+}
+
+.selected {
+border-color: #e0b84f;
+background: #4b3b18;
+}
+
+input,
+select {
+display: block;
+width: 100%;
+min-height: 44px;
+margin: 10px 0;
+padding: 9px 12px;
+border: 1px solid #666;
+background: #181818;
+color: #fff;
+}
+
+.creation-panel label {
+display: block;
+margin: 12px 0;
+}
+
+.creation-panel select {
+margin-top: 6px;
+}
+
+.text-button {
+border: 0;
+background: transparent;
+width: 100%;
+margin-top: 6px;
+}
+
+#accountMessage {
+min-height: 22px;
+text-align: center;
+opacity: 0.8;
+}
+
+#hud {
+position: absolute;
+inset: 0;
+pointer-events: none;
+z-index: 10;
+}
+
+#hpHud,
+#dayHud,
+#timeHud,
+#weaponHud {
+position: absolute;
+background: rgba(0, 0, 0, 0.55);
+padding: 8px 12px;
+border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#hpHud {
+top: 18px;
+left: 18px;
+}
+
+#dayHud {
+top: 18px;
+right: 18px;
+}
+
+#timeHud {
+top: 58px;
+right: 18px;
+}
+
+#weaponHud {
+top: 98px;
+right: 18px;
+}
+
+#hpBar {
+letter-spacing: 1px;
+}
+
+#interactionPrompt {
+position: absolute;
+bottom: 45px;
+left: 50%;
+transform: translateX(-50%);
+background: rgba(0, 0, 0, 0.7);
+padding: 10px 18px;
+display: none;
+}
+
+.dialogue-box {
+position: absolute;
+bottom: 25px;
+width: min(850px, 90vw);
+}
+
+.dialogue-box strong {
+display: block;
+font-size: 20px;
+margin-bottom: 8px;
+}
+
+.dialogue-box p {
+min-height: 50px;
+line-height: 1.5;
+}
+
+.dialogue-box button {
+display: block;
+margin-left: auto;
+}
+
+.tab-panel {
+width: min(760px, 92vw);
+min-height: 430px;
+}
+
+.tab-page {
+line-height: 1.8;
+}
+
+.death-text {
+font-size: clamp(48px, 9vw, 110px);
+letter-spacing: 10px;
+font-weight: bold;
+}
+
+#deathScreen {
+background: #000;
+}
+
+@media (max-width: 600px) {
+#hpHud,
+#dayHud,
+#timeHud,
+#weaponHud {
+font-size: 13px;
+}
+
+.panel,
+.menu-panel,
+.tab-panel {
+padding: 20px;
+}
+}
