@@ -930,7 +930,6 @@ document.querySelectorAll(".tab-buttons button").forEach(b => {
 b.classList.remove("selected");
 });
 
-```
 button.classList.add("selected");
 
 document.querySelectorAll(".tab-page").forEach(page => {
@@ -940,7 +939,6 @@ document.querySelectorAll(".tab-page").forEach(page => {
 document
   .getElementById(`${button.dataset.page}Page`)
   .classList.remove("hidden");
-```
 
 });
 });
