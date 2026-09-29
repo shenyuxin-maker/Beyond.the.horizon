@@ -1,34 +1,29 @@
 /* =========================================================
    BEYOND THE HORIZON — V0.1
-   Complete playable browser build
+   Complete playable browser build.
+   Authentication + Cloud Save: Supabase
    ========================================================= */
 
 "use strict";
 
-/* =========================================================
-   AUTH CONFIG
-   ========================================================= */
-
+/* =========================
+   SUPABASE CONFIG
+   =========================
+   IMPORTANT:
+   Use the Publishable key only.
+   NEVER put the Secret / service_role key here.
+*/
 const AUTH = {
   provider: "supabase",
-  url: "YOUR_SUPABASE_URL",
-  anonKey: "YOUR_SUPABASE_ANON_KEY"
+
+  url: "https://xabuhtsqhlpzjnfrdbgh.supabase.co",
+
+  anonKey: "YOUR_SUPABASE_PUBLISHABLE_KEY"
 };
 
-
-/* =========================================================
-   DOM HELPER
-   ========================================================= */
-
 const $ = (id) => document.getElementById(id);
-
 const canvas = $("gameCanvas");
 const ctx = canvas.getContext("2d");
-
-
-/* =========================================================
-   WORLD DATA
-   ========================================================= */
 
 const WORLD = {
   width: 3600,
@@ -98,11 +93,6 @@ const WORLD = {
   }
 };
 
-
-/* =========================================================
-   MONSTERS
-   ========================================================= */
-
 const MONSTERS = {
   boar: {
     name: "Wild Boar",
@@ -161,19 +151,13 @@ const MONSTERS = {
   }
 };
 
-
 const MATERIAL_PRICES = {
-  "Meat": 12,
-  "Tusk": 30,
-  "Scale": 35,
+  Meat: 12,
+  Tusk: 30,
+  Scale: 35,
   "Fire-rock Scale": 40,
   "Wind Feather": 35
 };
-
-
-/* =========================================================
-   PLAYER
-   ========================================================= */
 
 const initialPlayer = () => ({
   x: 790,
@@ -228,23 +212,13 @@ const initialPlayer = () => ({
   lastRentDay: 0
 });
 
-
-/* =========================================================
-   GAME STATE
-   ========================================================= */
-
 const state = {
-
   screen: "title",
 
   paused: false,
-
   dialogue: false,
-
   shop: false,
-
   opening: false,
-
   dead: false,
 
   keys: new Set(),
@@ -276,9 +250,7 @@ const state = {
   },
 
   attackCooldown: 0,
-
   dodgeCooldown: 0,
-
   dodgeTimer: 0,
 
   dash: {
@@ -290,6 +262,8 @@ const state = {
 
   user: null,
 
+  session: null,
+
   accountReady: false,
 
   openingIndex: 0,
@@ -299,13 +273,7 @@ const state = {
   npcAnim: 0
 };
 
-
-/* =========================================================
-   OPENING
-   ========================================================= */
-
 const OPENING = [
-
   [
     "The Horizon",
     "The world you know is built on floating continents. Some are peaceful. Some are wild. Beyond the safe routes lie places few ordinary people visit."
@@ -330,101 +298,61 @@ const OPENING = [
     "Beyond the Horizon",
     "The city is only the beginning. Explore, hunt, process or sell your finds, manage your money, pay your rent, and decide how far beyond the horizon you will go."
   ]
-
 ];
 
-
-/* =========================================================
-   SAFE DOM CHECK
-   ========================================================= */
-
-function requireElement(id) {
-
-  const element = $(id);
-
-  if (!element) {
-    console.error(
-      `Beyond the Horizon: Missing HTML element #${id}`
-    );
-  }
-
-  return element;
-}
-
-
-/* =========================================================
+/* =========================
    CANVAS
-   ========================================================= */
+   ========================= */
 
 function resizeCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  const dpr = Math.min(
-    window.devicePixelRatio || 1,
-    2
-  );
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
 
-  canvas.width =
-    Math.floor(innerWidth * dpr);
+  canvas.style.width = innerWidth + "px";
+  canvas.style.height = innerHeight + "px";
 
-  canvas.height =
-    Math.floor(innerHeight * dpr);
-
-  canvas.style.width =
-    innerWidth + "px";
-
-  canvas.style.height =
-    innerHeight + "px";
-
-  ctx.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-addEventListener(
-  "resize",
-  resizeCanvas
-);
+addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
 
-
 /* =========================================================
-   AUTH ADAPTER
+   SUPABASE AUTH ADAPTER
    ========================================================= */
 
 const AuthAdapter = {
 
   configured() {
-
     return (
       AUTH.provider === "supabase" &&
       AUTH.url.startsWith("http") &&
       AUTH.anonKey &&
-      !AUTH.url.includes("YOUR_") &&
       !AUTH.anonKey.includes("YOUR_")
     );
   },
 
   async supabase(path, options = {}) {
 
+    if (!this.configured()) {
+      throw new Error(
+        "Supabase is not configured. Add your Publishable key in game.js."
+      );
+    }
+
     const headers = {
       "Content-Type": "application/json",
       "apikey": AUTH.anonKey,
-      ...(options.accessToken
-        ? {
-            "Authorization":
-              "Bearer " + options.accessToken
-          }
-        : {})
+      "Authorization": "Bearer " + (
+        options.accessToken || AUTH.anonKey
+      )
     };
 
     const res = await fetch(
-      AUTH.url + "/auth/v1/" + path,
+      AUTH.url + path,
       {
         method: options.method || "GET",
         headers,
@@ -434,8 +362,7 @@ const AuthAdapter = {
       }
     );
 
-    const data =
-      await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
 
@@ -443,28 +370,18 @@ const AuthAdapter = {
         data.msg ||
         data.error_description ||
         data.message ||
-        "Authentication failed."
+        data.error ||
+        "Supabase request failed."
       );
     }
 
     return data;
   },
 
-  async signUp(
-    email,
-    password,
-    username
-  ) {
+  async signUp(email, password, username) {
 
-    if (!this.configured()) {
-
-      throw new Error(
-        "Real authentication is not configured yet. Add the authentication URL and public key in game.js."
-      );
-    }
-
-    return this.supabase(
-      "signup",
+    const data = await this.supabase(
+      "/auth/v1/signup",
       {
         method: "POST",
 
@@ -478,22 +395,14 @@ const AuthAdapter = {
         }
       }
     );
+
+    return data;
   },
 
-  async signIn(
-    email,
-    password
-  ) {
+  async signIn(email, password) {
 
-    if (!this.configured()) {
-
-      throw new Error(
-        "Real authentication is not configured yet. Add the authentication URL and public key in game.js."
-      );
-    }
-
-    return this.supabase(
-      "token?grant_type=password",
+    const data = await this.supabase(
+      "/auth/v1/token?grant_type=password",
       {
         method: "POST",
 
@@ -503,67 +412,119 @@ const AuthAdapter = {
         }
       }
     );
+
+    return data;
   },
 
   async reset(email) {
 
-    if (!this.configured()) {
+    const redirectUrl =
+      window.location.origin +
+      window.location.pathname;
 
-      throw new Error(
-        "Real authentication is not configured yet. Add the authentication URL and public key in game.js."
-      );
-    }
-
-    return this.supabase(
-      "recover",
+    const data = await this.supabase(
+      "/auth/v1/recover",
       {
         method: "POST",
-        body: { email }
+
+        body: {
+          email,
+
+          redirect_to: redirectUrl
+        }
       }
     );
+
+    return data;
   }
 };
 
+/* =========================================================
+   SUPABASE DATABASE ADAPTER
+   ========================================================= */
+
+const SaveAdapter = {
+
+  async getSave(userId, accessToken) {
+
+    const encodedId = encodeURIComponent(userId);
+
+    const data = await AuthAdapter.supabase(
+      "/rest/v1/game_saves?select=id,user_id,save_data,updated_at&user_id=eq." +
+      encodedId +
+      "&limit=1",
+      {
+        method: "GET",
+        accessToken
+      }
+    );
+
+    return data && data.length ? data[0] : null;
+  },
+
+  async createSave(userId, saveData, accessToken) {
+
+    const data = await AuthAdapter.supabase(
+      "/rest/v1/game_saves",
+      {
+        method: "POST",
+
+        accessToken,
+
+        body: {
+          user_id: userId,
+          save_data: saveData
+        }
+      }
+    );
+
+    return data;
+  },
+
+  async updateSave(rowId, saveData, accessToken) {
+
+    const encodedId = encodeURIComponent(rowId);
+
+    const data = await AuthAdapter.supabase(
+      "/rest/v1/game_saves?id=eq." + encodedId,
+      {
+        method: "PATCH",
+
+        accessToken,
+
+        body: {
+          save_data: saveData,
+          updated_at: new Date().toISOString()
+        }
+      }
+    );
+
+    return data;
+  }
+};
 
 /* =========================================================
-   UI HELPERS
+   UI
    ========================================================= */
 
 function show(id) {
-
   const el = $(id);
-
-  if (el) {
-    el.classList.remove("hidden");
-  }
+  if (el) el.classList.remove("hidden");
 }
-
 
 function hide(id) {
-
   const el = $(id);
-
-  if (el) {
-    el.classList.add("hidden");
-  }
+  if (el) el.classList.add("hidden");
 }
-
 
 function setMessage(msg) {
-
   const el = $("accountMessage");
-
-  if (el) {
-    el.textContent = msg;
-  }
+  if (el) el.textContent = msg;
 }
-
 
 function toast(msg) {
 
   const el = $("toast");
-
-  if (!el) return;
 
   el.textContent = msg;
 
@@ -571,13 +532,11 @@ function toast(msg) {
 
   clearTimeout(state.toastTimer);
 
-  state.toastTimer =
-    setTimeout(
-      () => el.classList.remove("show"),
-      2200
-    );
+  state.toastTimer = setTimeout(
+    () => el.classList.remove("show"),
+    2200
+  );
 }
-
 
 function setScreen(screen) {
 
@@ -590,22 +549,24 @@ function setScreen(screen) {
     "characterScreen"
   ].forEach(hide);
 
-  hide("hud");
-
   if (screen === "title") {
     show("titleScreen");
+    hide("hud");
   }
 
   if (screen === "account") {
     show("accountScreen");
+    hide("hud");
   }
 
   if (screen === "menu") {
     show("mainMenu");
+    hide("hud");
   }
 
   if (screen === "character") {
     show("characterScreen");
+    hide("hud");
   }
 
   if (screen === "world") {
@@ -613,52 +574,31 @@ function setScreen(screen) {
   }
 }
 
-
 function updateMenu() {
 
-  const continueButton =
-    $("continueButton");
+  $("continueButton").disabled =
+    !state.player.save;
 
-  if (continueButton) {
-    continueButton.disabled =
-      !state.player.save;
-  }
-
-  const welcome =
-    $("welcomeText");
-
-  if (welcome) {
-
-    welcome.textContent =
-      state.user
-        ? `Logged in as ${
-            state.user.username ||
-            state.user.email ||
-            "Hunter"
-          }`
-        : "";
-  }
+  $("welcomeText").textContent =
+    state.user
+      ? `Logged in as ${
+          state.user.username ||
+          state.user.email ||
+          "Hunter"
+        }`
+      : "";
 }
-
-
-/* =========================================================
-   ACCOUNT TABS
-   ========================================================= */
 
 function accountTab(which) {
 
   document
-    .querySelectorAll(
-      ".account-tabs .tab"
-    )
-    .forEach(button => {
-
-      button.classList.toggle(
+    .querySelectorAll(".account-tabs .tab")
+    .forEach(
+      b => b.classList.toggle(
         "active",
-        button.dataset.account === which
-      );
-
-    });
+        b.dataset.account === which
+      )
+    );
 
   if (which === "login") {
 
@@ -669,45 +609,35 @@ function accountTab(which) {
 
     hide("loginForm");
     show("signupForm");
-
   }
 
   setMessage("");
 }
 
-
-/* =========================================================
-   ACCOUNT EVENTS
-   ========================================================= */
-
 document
-  .querySelectorAll(
-    ".account-tabs .tab"
-  )
-  .forEach(button => {
-
-    button.addEventListener(
+  .querySelectorAll(".account-tabs .tab")
+  .forEach(
+    b => b.addEventListener(
       "click",
-      () => accountTab(
-        button.dataset.account
-      )
-    );
+      () => accountTab(b.dataset.account)
+    )
+  );
 
-  });
-
-
-$("backToTitle")?.addEventListener(
+$("backToTitle").addEventListener(
   "click",
   () => setScreen("title")
 );
 
+/* =========================================================
+   PASSWORD RESET
+   ========================================================= */
 
-$("forgotPassword")?.addEventListener(
+$("forgotPassword").addEventListener(
   "click",
   async () => {
 
     const email =
-      $("loginEmail")?.value.trim();
+      $("loginEmail").value.trim();
 
     if (!email) {
 
@@ -718,28 +648,58 @@ $("forgotPassword")?.addEventListener(
       return;
     }
 
+    if (!AuthAdapter.configured()) {
+
+      setMessage(
+        "Supabase is not configured yet."
+      );
+
+      return;
+    }
+
     try {
+
+      setMessage(
+        "Sending password reset email..."
+      );
 
       await AuthAdapter.reset(email);
 
       setMessage(
-        "Password reset email sent."
+        "Password reset email sent. Check your inbox."
       );
 
     } catch (e) {
 
       setMessage(e.message);
-
     }
   }
 );
 
+/* =========================================================
+   LOGIN
+   ========================================================= */
 
-$("loginForm")?.addEventListener(
+$("loginForm").addEventListener(
   "submit",
   async e => {
 
     e.preventDefault();
+
+    const email =
+      $("loginEmail").value.trim();
+
+    const password =
+      $("loginPassword").value;
+
+    if (!email || !password) {
+
+      setMessage(
+        "Enter your email and password."
+      );
+
+      return;
+    }
 
     setMessage("Logging in...");
 
@@ -747,9 +707,18 @@ $("loginForm")?.addEventListener(
 
       const data =
         await AuthAdapter.signIn(
-          $("loginEmail").value.trim(),
-          $("loginPassword").value
+          email,
+          password
         );
+
+      if (!data.access_token) {
+
+        throw new Error(
+          "Login succeeded but no session was returned."
+        );
+      }
+
+      state.session = data;
 
       state.user = {
         id: data.user?.id,
@@ -761,38 +730,86 @@ $("loginForm")?.addEventListener(
 
       state.accountReady = true;
 
+      await loadCloudSave();
+
       setScreen("menu");
 
       updateMenu();
 
-      await loadCloudSave();
+      setMessage("");
 
     } catch (err) {
 
-      setMessage(err.message);
-
+      setMessage(
+        err.message ||
+        "Login failed."
+      );
     }
-
   }
 );
 
+/* =========================================================
+   SIGN UP
+   ========================================================= */
 
-$("signupForm")?.addEventListener(
+$("signupForm").addEventListener(
   "submit",
   async e => {
 
     e.preventDefault();
 
+    const username =
+      $("signupUsername").value.trim();
+
+    const email =
+      $("signupEmail").value.trim();
+
     const password =
       $("signupPassword").value;
 
-    if (
-      password !==
-      $("signupConfirm").value
-    ) {
+    const confirm =
+      $("signupConfirm").value;
+
+    if (!username) {
+
+      setMessage(
+        "Enter a username."
+      );
+
+      return;
+    }
+
+    if (!email) {
+
+      setMessage(
+        "Enter an email address."
+      );
+
+      return;
+    }
+
+    if (!password) {
+
+      setMessage(
+        "Enter a password."
+      );
+
+      return;
+    }
+
+    if (password !== confirm) {
 
       setMessage(
         "Passwords do not match."
+      );
+
+      return;
+    }
+
+    if (password.length < 6) {
+
+      setMessage(
+        "Password must be at least 6 characters."
       );
 
       return;
@@ -806,81 +823,108 @@ $("signupForm")?.addEventListener(
 
       const data =
         await AuthAdapter.signUp(
-          $("signupEmail").value.trim(),
+          email,
           password,
-          $("signupUsername").value.trim()
+          username
         );
 
-      if (data.access_token) {
+      /*
+        Supabase may require email verification.
+        If email confirmation is enabled,
+        data.session will be null.
+      */
+
+      if (
+        data.access_token &&
+        data.user
+      ) {
+
+        state.session = data;
 
         state.user = {
-          id: data.user?.id,
-          email: data.user?.email,
+          id: data.user.id,
+          email: data.user.email,
           username:
-            $("signupUsername").value.trim()
+            data.user.user_metadata?.username ||
+            username
         };
 
         state.accountReady = true;
+
+        state.player = initialPlayer();
+
+        createInitialSave();
+
+        await saveCloud();
 
         setScreen("menu");
 
         updateMenu();
 
+        toast("Account created.");
+
       } else {
 
         setMessage(
-          "Account created. Check your email if verification is enabled, then log in."
+          "Account created. Check your email to verify your account, then log in."
         );
 
         accountTab("login");
+
+        $("loginEmail").value =
+          email;
       }
 
     } catch (err) {
 
-      setMessage(err.message);
-
+      setMessage(
+        err.message ||
+        "Sign up failed."
+      );
     }
-
   }
 );
 
-
 /* =========================================================
-   MAIN MENU EVENTS
+   LOGOUT
    ========================================================= */
 
-$("logoutButton")?.addEventListener(
+$("logoutButton").addEventListener(
   "click",
   () => {
 
     state.user = null;
 
+    state.session = null;
+
     state.accountReady = false;
 
-    state.player =
-      initialPlayer();
+    state.player = initialPlayer();
+
+    state.monsters = [];
 
     setScreen("account");
 
     accountTab("login");
 
-  }
-);
-
-
-$("settingsButton")?.addEventListener(
-  "click",
-  () => {
-
-    alert(
-      "V0.1 settings: responsive display, controls, and audio hooks are prepared. Full options can expand in a later version."
+    setMessage(
+      "You have been logged out."
     );
-
   }
 );
 
+$("settingsButton").addEventListener(
+  "click",
+  () => alert(
+    "V0.1 settings: responsive display, controls, and audio hooks are prepared. Full options can expand in a later version."
+  )
+);
 
-$("newGameButton")?.addEventListener(
+/* =========================================================
+   NEW GAME
+   ========================================================= */
+
+$("newGameButton").addEventListener(
   "click",
   () => {
 
@@ -890,26 +934,31 @@ $("newGameButton")?.addEventListener(
     setScreen("character");
 
     updateCharacterPreview();
-
   }
 );
 
+/* =========================================================
+   CONTINUE
+   ========================================================= */
 
-$("continueButton")?.addEventListener(
+$("continueButton").addEventListener(
   "click",
   () => {
 
-    if (!state.player.save) return;
+    if (!state.player.save) {
+
+      toast("No save exists.");
+
+      return;
+    }
 
     loadSaveObject(
       state.player.save
     );
 
     enterWorld();
-
   }
 );
-
 
 /* =========================================================
    CHARACTER CREATION
@@ -920,17 +969,14 @@ $("continueButton")?.addEventListener(
   "skin",
   "eyes",
   "hair"
-].forEach(id => {
-
-  $(id)?.addEventListener(
+].forEach(
+  id => $(id).addEventListener(
     "change",
     updateCharacterPreview
-  );
+  )
+);
 
-});
-
-
-$("confirmCharacter")?.addEventListener(
+$("confirmCharacter").addEventListener(
   "click",
   () => {
 
@@ -946,10 +992,7 @@ $("confirmCharacter")?.addEventListener(
         $("eyes").value,
 
       hair:
-        Number(
-          $("hair").value
-        )
-
+        Number($("hair").value)
     };
 
     state.player.money = 500;
@@ -963,23 +1006,15 @@ $("confirmCharacter")?.addEventListener(
     createInitialSave();
 
     startOpening();
-
   }
 );
 
-
-$("cancelCharacter")?.addEventListener(
+$("cancelCharacter").addEventListener(
   "click",
   () => setScreen("menu")
 );
 
-
 function updateCharacterPreview() {
-
-  const preview =
-    $("characterPreview");
-
-  if (!preview) return;
 
   const c = {
 
@@ -993,23 +1028,19 @@ function updateCharacterPreview() {
       $("eyes").value,
 
     hair:
-      Number(
-        $("hair").value
-      )
-
+      Number($("hair").value)
   };
 
-  preview.innerHTML = "";
+  $("characterPreview").innerHTML = "";
 
   const cv =
-    document.createElement(
-      "canvas"
-    );
+    document.createElement("canvas");
 
   cv.width = 130;
   cv.height = 160;
 
-  preview.appendChild(cv);
+  $("characterPreview")
+    .appendChild(cv);
 
   drawCharacter(
     cv.getContext("2d"),
@@ -1020,7 +1051,6 @@ function updateCharacterPreview() {
     0
   );
 }
-
 
 /* =========================================================
    OPENING
@@ -1037,29 +1067,26 @@ function startOpening() {
   renderOpening();
 }
 
-
 function renderOpening() {
 
   const item =
-    OPENING[
-      state.openingIndex
-    ];
+    OPENING[state.openingIndex];
 
-  $("openingTitle").textContent =
-    item[0];
+  $("openingTitle")
+    .textContent = item[0];
 
-  $("openingText").textContent =
-    item[1];
+  $("openingText")
+    .textContent = item[1];
 
-  $("openingNext").textContent =
-    state.openingIndex ===
-    OPENING.length - 1
-      ? "BEGIN DAY 1"
-      : "CONTINUE";
+  $("openingNext")
+    .textContent =
+      state.openingIndex ===
+      OPENING.length - 1
+        ? "BEGIN DAY 1"
+        : "CONTINUE";
 }
 
-
-$("openingNext")?.addEventListener(
+$("openingNext").addEventListener(
   "click",
   () => {
 
@@ -1079,14 +1106,11 @@ $("openingNext")?.addEventListener(
     } else {
 
       renderOpening();
-
     }
-
   }
 );
 
-
-$("skipOpening")?.addEventListener(
+$("skipOpening").addEventListener(
   "click",
   () => {
 
@@ -1095,10 +1119,36 @@ $("skipOpening")?.addEventListener(
     state.opening = false;
 
     enterWorld();
-
   }
 );
 
+addEventListener(
+  "keydown",
+  e => {
+
+    if (
+      state.screen === "title" &&
+      !e.repeat
+    ) {
+
+      e.preventDefault();
+
+      setScreen("account");
+    }
+
+    if (
+      state.opening &&
+      e.key === "Escape"
+    ) {
+
+      hide("openingScreen");
+
+      state.opening = false;
+
+      enterWorld();
+    }
+  }
+);
 
 /* =========================================================
    SAVE / LOAD
@@ -1111,7 +1161,6 @@ function clone(o) {
   );
 }
 
-
 function saveObject() {
 
   const data =
@@ -1121,7 +1170,6 @@ function saveObject() {
 
   return data;
 }
-
 
 function createInitialSave() {
 
@@ -1133,81 +1181,128 @@ function createInitialSave() {
   state.player.save.hour = 8;
 }
 
+/* =========================================================
+   REAL SUPABASE CLOUD SAVE
+   ========================================================= */
 
 async function saveGame() {
+
+  if (!state.user || !state.session) {
+
+    toast(
+      "You must be logged in to save."
+    );
+
+    return;
+  }
 
   state.player.save =
     saveObject();
 
-  state.player.save.save =
-    clone(
-      state.player.save
-    );
-
-  toast("Game saved.");
-
-  await saveCloud();
-}
-
-
-async function saveCloud() {
-
-  if (!state.user) return;
-
   try {
 
-    const key =
-      "bth_save_" +
-      state.user.id;
+    await saveCloud();
 
-    localStorage.setItem(
-      key,
-      JSON.stringify(
-        state.player.save
-      )
+    toast(
+      "Game saved to the cloud."
     );
 
   } catch (e) {
 
-    console.warn(
-      "Cloud save adapter unavailable:",
-      e
-    );
+    console.error(e);
 
+    toast(
+      "Cloud save failed."
+    );
   }
 }
 
+async function saveCloud() {
+
+  if (
+    !state.user ||
+    !state.session?.access_token
+  ) {
+
+    throw new Error(
+      "No authenticated Supabase session."
+    );
+  }
+
+  const saveData =
+    saveObject();
+
+  const existing =
+    await SaveAdapter.getSave(
+      state.user.id,
+      state.session.access_token
+    );
+
+  if (existing) {
+
+    await SaveAdapter.updateSave(
+      existing.id,
+      saveData,
+      state.session.access_token
+    );
+
+  } else {
+
+    await SaveAdapter.createSave(
+      state.user.id,
+      saveData,
+      state.session.access_token
+    );
+  }
+
+  state.player.save =
+    clone(saveData);
+}
 
 async function loadCloudSave() {
 
-  if (!state.user) return;
+  if (
+    !state.user ||
+    !state.session?.access_token
+  ) {
+
+    return;
+  }
 
   try {
 
-    const raw =
-      localStorage.getItem(
-        "bth_save_" +
-        state.user.id
+    const row =
+      await SaveAdapter.getSave(
+        state.user.id,
+        state.session.access_token
       );
 
-    if (raw) {
+    if (row && row.save_data) {
 
       state.player.save =
-        JSON.parse(raw);
+        clone(row.save_data);
 
-      loadSaveObject(
-        state.player.save
-      );
+      updateMenu();
 
+    } else {
+
+      state.player.save = null;
+
+      updateMenu();
     }
 
   } catch (e) {
 
-    console.warn(e);
+    console.error(
+      "Cloud save loading failed:",
+      e
+    );
 
+    toast(
+      "Could not load cloud save."
+    );
   }
 }
-
 
 function loadSaveObject(data) {
 
@@ -1225,16 +1320,14 @@ function loadSaveObject(data) {
   state.monsters = [];
 }
 
-
-$("saveButton")?.addEventListener(
+$("saveButton").addEventListener(
   "click",
   saveGame
 );
 
-
-$("loadButton")?.addEventListener(
+$("loadButton").addEventListener(
   "click",
-  () => {
+  async () => {
 
     if (!state.player.save) {
 
@@ -1254,10 +1347,8 @@ $("loadButton")?.addEventListener(
     toast(
       "Save loaded."
     );
-
   }
 );
-
 
 /* =========================================================
    WORLD
@@ -1268,15 +1359,11 @@ function enterWorld() {
   setScreen("world");
 
   hide("pauseMenu");
-
   hide("tabMenu");
-
   hide("dialogueBox");
-
   hide("shopOverlay");
 
   state.paused = false;
-
   state.dead = false;
 
   if (!state.player.save) {
@@ -1296,7 +1383,6 @@ function enterWorld() {
   );
 }
 
-
 function formatTime(h) {
 
   const hour =
@@ -1308,17 +1394,13 @@ function formatTime(h) {
   );
 }
 
-
 function updateHUD() {
 
   const p =
     state.player;
 
   $("hpText").textContent =
-    `${Math.max(
-      0,
-      Math.round(p.hp)
-    )} / ${p.maxHp}`;
+    `${Math.max(0, Math.round(p.hp))} / ${p.maxHp}`;
 
   $("hpFill").style.width =
     Math.max(
@@ -1342,7 +1424,6 @@ function updateHUD() {
     p.weapon.toUpperCase();
 }
 
-
 function currentArea() {
 
   return (
@@ -1352,7 +1433,6 @@ function currentArea() {
     WORLD.islands.central
   );
 }
-
 
 function islandBounds() {
 
@@ -1367,7 +1447,6 @@ function islandBounds() {
       w: 1600,
       h: 1100
     };
-
   }
 
   return {
@@ -1377,7 +1456,6 @@ function islandBounds() {
     h: 1500
   };
 }
-
 
 function setCamera() {
 
@@ -1390,7 +1468,7 @@ function setCamera() {
       Math.min(
         b.w - innerWidth,
         state.player.x -
-          innerWidth / 2
+        innerWidth / 2
       )
     );
 
@@ -1400,14 +1478,13 @@ function setCamera() {
       Math.min(
         b.h - innerHeight,
         state.player.y -
-          innerHeight / 2
+        innerHeight / 2
       )
     );
 }
 
-
 /* =========================================================
-   TRAIN
+   MAP / TRAIN
    ========================================================= */
 
 function trainDestinations() {
@@ -1417,7 +1494,6 @@ function trainDestinations() {
       k => WORLD.islands[k]
     );
 }
-
 
 function useTrain() {
 
@@ -1461,7 +1537,6 @@ function useTrain() {
           k;
 
         state.player.x = 300;
-
         state.player.y = 300;
 
         closeShop();
@@ -1471,15 +1546,12 @@ function useTrain() {
         toast(
           `Arrived at ${WORLD.islands[k].name}.`
         );
-
       }
     );
 
     box.appendChild(b);
-
   });
 }
-
 
 function revealIsland(k) {
 
@@ -1488,32 +1560,27 @@ function revealIsland(k) {
       .includes(k)
   ) {
 
-    state.player.discovered.push(k);
-
+    state.player.discovered
+      .push(k);
   }
 }
-
 
 /* =========================================================
    SHOPS
    ========================================================= */
 
-function openShop(
-  title,
-  html
-) {
+function openShop(title, html) {
 
   state.shop = true;
 
   show("shopOverlay");
 
-  $("shopTitle").textContent =
-    title;
+  $("shopTitle")
+    .textContent = title;
 
-  $("shopContent").innerHTML =
-    html;
+  $("shopContent")
+    .innerHTML = html;
 }
-
 
 function closeShop() {
 
@@ -1522,16 +1589,11 @@ function closeShop() {
   hide("shopOverlay");
 }
 
-
-$("closeShop")?.addEventListener(
-  "click",
-  closeShop
-);
-
-
-/* =========================================================
-   HUNTER COMPANY
-   ========================================================= */
+$("closeShop")
+  .addEventListener(
+    "click",
+    closeShop
+  );
 
 function companyShop() {
 
@@ -1580,62 +1642,59 @@ function companyShop() {
   const sales =
     $("corpseSales");
 
-  if (
-    !state.player.corpses.length
-  ) {
+  if (!state.player.corpses.length) {
 
     sales.innerHTML =
       "<p class='muted'>No corpses.</p>";
 
+  } else {
+
+    state.player.corpses
+      .forEach(
+        (type, i) => {
+
+          const m =
+            MONSTERS[type];
+
+          const row =
+            document.createElement(
+              "div"
+            );
+
+          row.className =
+            "shop-action";
+
+          row.innerHTML = `
+            <span>
+              ${m.name} —
+              ${m.corpseValue} G
+            </span>
+
+            <button>
+              SELL
+            </button>
+          `;
+
+          row
+            .querySelector("button")
+            .onclick = () => {
+
+              state.player.money +=
+                m.corpseValue;
+
+              state.player.corpses
+                .splice(i, 1);
+
+              companyShop();
+
+              updateHUD();
+            };
+
+          sales.appendChild(row);
+        }
+      );
   }
-
-  state.player.corpses
-    .forEach(
-      (type, i) => {
-
-        const m =
-          MONSTERS[type];
-
-        const row =
-          document.createElement(
-            "div"
-          );
-
-        row.className =
-          "shop-action";
-
-        row.innerHTML = `
-          <span>
-            ${m.name} — ${m.corpseValue} G
-          </span>
-
-          <button>
-            SELL
-          </button>
-        `;
-
-        row
-          .querySelector("button")
-          .onclick = () => {
-
-            state.player.money +=
-              m.corpseValue;
-
-            state.player.corpses
-              .splice(i, 1);
-
-            companyShop();
-
-            updateHUD();
-
-          };
-
-        sales.appendChild(row);
-
-      }
-    );
 }
-
 
 function repairWeapon(w) {
 
@@ -1678,19 +1737,15 @@ function repairWeapon(w) {
   updateHUD();
 }
 
-
-/* =========================================================
-   PROCESSING SHOP
-   ========================================================= */
-
 function processingShop() {
 
   openShop(
     "MONSTER PROCESSING",
     `
       <p>
-        Pay the processing fee to disassemble
-        a corpse. Common material is guaranteed;
+        Pay the processing fee to
+        disassemble a corpse.
+        Common material is guaranteed;
         rare material has a 50% chance.
       </p>
 
@@ -1728,7 +1783,8 @@ function processingShop() {
 
         row.innerHTML = `
           <span>
-            ${m.name} — fee ${m.fee} G
+            ${m.name} —
+            fee ${m.fee} G
           </span>
 
           <button>
@@ -1758,9 +1814,9 @@ function processingShop() {
             addItem(
               m.common,
               2 +
-                Math.floor(
-                  Math.random() * 2
-                )
+              Math.floor(
+                Math.random() * 2
+              )
             );
 
             if (
@@ -1771,7 +1827,6 @@ function processingShop() {
                 m.rare,
                 1
               );
-
             }
 
             state.player.corpses
@@ -1786,19 +1841,12 @@ function processingShop() {
             toast(
               "Processing complete."
             );
-
           };
 
         list.appendChild(row);
-
       }
     );
 }
-
-
-/* =========================================================
-   MALL
-   ========================================================= */
 
 function mallShop() {
 
@@ -1844,12 +1892,14 @@ function mallShop() {
       <p>
         1 Common Material +
         1 Rare Material +
-        10 G
-        → 1 Healing Medicine
+        10 G →
+        1 Healing Medicine
       </p>
 
       <div class="shop-action">
-        <span>Craft 1</span>
+        <span>
+          Craft 1
+        </span>
 
         <button id="craftMed">
           CRAFT
@@ -1871,11 +1921,7 @@ function mallShop() {
     craftMedicine;
 }
 
-
-function buyArrows(
-  n,
-  cost
-) {
+function buyArrows(n, cost) {
 
   if (
     state.player.money <
@@ -1899,7 +1945,6 @@ function buyArrows(
 
   updateHUD();
 }
-
 
 function buyMedicine() {
 
@@ -1928,29 +1973,25 @@ function buyMedicine() {
   updateHUD();
 }
 
-
 function craftMedicine() {
 
   const common =
     Object.keys(
       state.player.inventory
-    ).find(
+    )
+    .find(
       k => k === "Meat"
     );
 
-  const rare =
-    [
-      "Tusk",
-      "Scale",
-      "Fire-rock Scale",
-      "Wind Feather"
-    ].find(
-      k =>
-        (
-          state.player
-            .inventory[k] || 0
-        ) > 0
-    );
+  const rare = [
+    "Tusk",
+    "Scale",
+    "Fire-rock Scale",
+    "Wind Feather"
+  ].find(
+    k =>
+      (state.player.inventory[k] || 0) > 0
+  );
 
   if (
     !common ||
@@ -1965,13 +2006,9 @@ function craftMedicine() {
     return;
   }
 
-  state.player.inventory[
-    common
-  ]--;
+  state.player.inventory[common]--;
 
-  state.player.inventory[
-    rare
-  ]--;
+  state.player.inventory[rare]--;
 
   state.player.money -=
     10;
@@ -1988,32 +2025,19 @@ function craftMedicine() {
   refreshItems();
 }
 
-
-/* =========================================================
-   ITEMS
-   ========================================================= */
-
-function addItem(
-  name,
-  n = 1
-) {
+function addItem(name, n = 1) {
 
   state.player.inventory[name] =
-    (
-      state.player.inventory[name] ||
-      0
-    ) + n;
+    (state.player.inventory[name] || 0) +
+    n;
 }
-
 
 function useMedicine() {
 
   if (
-    (
-      state.player.inventory[
-        "Healing Medicine"
-      ] || 0
-    ) <= 0
+    (state.player.inventory[
+      "Healing Medicine"
+    ] || 0) <= 0
   ) {
 
     toast(
@@ -2052,13 +2076,11 @@ function useMedicine() {
   toast("+40 HP");
 }
 
-
 /* =========================================================
    DIALOGUE
    ========================================================= */
 
 let dialogueAction = null;
-
 
 function openDialogue(
   name,
@@ -2071,11 +2093,11 @@ function openDialogue(
 
   show("dialogueBox");
 
-  $("dialogueName").textContent =
-    name;
+  $("dialogueName")
+    .textContent = name;
 
-  $("dialogueText").textContent =
-    text;
+  $("dialogueText")
+    .textContent = text;
 
   const c =
     $("dialogueChoices");
@@ -2086,8 +2108,7 @@ function openDialogue(
     onClose;
 
   $("dialogueContinue")
-    .classList
-    .toggle(
+    .classList.toggle(
       "hidden",
       !!choices
     );
@@ -2105,24 +2126,20 @@ function openDialogue(
         b.textContent =
           ch.label;
 
-        b.onclick =
-          () => {
+        b.onclick = () => {
 
-            if (ch.action) {
-              ch.action();
-            }
+          if (ch.action) {
+            ch.action();
+          }
 
-            closeDialogue();
-
-          };
+          closeDialogue();
+        };
 
         c.appendChild(b);
-
       }
     );
   }
 }
-
 
 function closeDialogue() {
 
@@ -2138,23 +2155,20 @@ function closeDialogue() {
     const a =
       dialogueAction;
 
-    dialogueAction =
-      null;
+    dialogueAction = null;
 
     a();
-
   }
 }
 
-
-$("dialogueContinue")?.addEventListener(
-  "click",
-  closeDialogue
-);
-
+$("dialogueContinue")
+  .addEventListener(
+    "click",
+    closeDialogue
+  );
 
 /* =========================================================
-   INTERACTABLES
+   INTERACTIONS
    ========================================================= */
 
 const INTERACTABLES = [
@@ -2166,8 +2180,7 @@ const INTERACTABLES = [
     w: 360,
     h: 220,
     action: companyShop,
-    prompt:
-      "[E] Enter Hunter Company"
+    prompt: "[E] Enter Hunter Company"
   },
 
   {
@@ -2177,8 +2190,7 @@ const INTERACTABLES = [
     w: 300,
     h: 190,
     action: processingShop,
-    prompt:
-      "[E] Enter Processing Shop"
+    prompt: "[E] Enter Processing Shop"
   },
 
   {
@@ -2188,8 +2200,7 @@ const INTERACTABLES = [
     w: 360,
     h: 230,
     action: mallShop,
-    prompt:
-      "[E] Enter Mall"
+    prompt: "[E] Enter Mall"
   },
 
   {
@@ -2199,8 +2210,7 @@ const INTERACTABLES = [
     w: 120,
     h: 120,
     action: useTrain,
-    prompt:
-      "[E] Use Train Station"
+    prompt: "[E] Use Train Station"
   },
 
   {
@@ -2210,12 +2220,9 @@ const INTERACTABLES = [
     w: 260,
     h: 240,
     action: () => houseMenu(),
-    prompt:
-      "[E] Enter House"
+    prompt: "[E] Enter House"
   }
-
 ];
-
 
 function houseMenu() {
 
@@ -2223,8 +2230,9 @@ function houseMenu() {
     "YOUR HOUSE",
     `
       <p>
-        Your home. Sleeping advances
-        to the next day and restores HP.
+        Your home.
+        Sleeping advances to the next day
+        and restores HP.
       </p>
 
       <div class="shop-action">
@@ -2243,19 +2251,16 @@ function houseMenu() {
     `
   );
 
-  $("sleepBtn").onclick =
-    () => {
+  $("sleepBtn").onclick = () => {
 
-      closeShop();
+    closeShop();
 
-      sleep();
-
-    };
+    sleep();
+  };
 
   $("houseSave").onclick =
     () => saveGame();
 }
-
 
 function checkInteraction() {
 
@@ -2281,8 +2286,7 @@ function checkInteraction() {
     ) {
 
       state.interaction = {
-        prompt:
-          "[E] Use Train Station",
+        prompt: "[E] Use Train Station",
         action: useTrain
       };
 
@@ -2318,11 +2322,7 @@ function checkInteraction() {
   }
 }
 
-
-function inRect(
-  p,
-  r
-) {
+function inRect(p, r) {
 
   return (
     p.x >= r.x &&
@@ -2331,7 +2331,6 @@ function inRect(
     p.y <= r.y + r.h
   );
 }
-
 
 /* =========================================================
    INPUT
@@ -2354,28 +2353,17 @@ addEventListener(
       ) {
 
         toggleTab();
-
       }
 
       return;
     }
 
-
     if (e.key === "Escape") {
 
       if (
-        state.screen ===
-        "title"
-      ) {
-
-        setScreen("account");
-
-        return;
-      }
-
-      if (
-        state.screen !==
-        "world"
+        !["world"].includes(
+          state.screen
+        )
       ) {
 
         return;
@@ -2398,12 +2386,10 @@ addEventListener(
       if (!state.opening) {
 
         togglePause();
-
       }
 
       return;
     }
-
 
     if (
       state.screen !== "world" ||
@@ -2416,10 +2402,10 @@ addEventListener(
       return;
     }
 
-
     if (
-      ["1", "2"]
-        .includes(e.key)
+      ["1", "2"].includes(
+        e.key
+      )
     ) {
 
       equip(
@@ -2430,7 +2416,6 @@ addEventListener(
 
       return;
     }
-
 
     if (
       e.key.toLowerCase() ===
@@ -2443,12 +2428,10 @@ addEventListener(
 
         state.interaction
           .action();
-
       }
 
       return;
     }
-
 
     if (
       e.key.toLowerCase() ===
@@ -2460,26 +2443,19 @@ addEventListener(
       return;
     }
 
-
     state.keys.add(
       e.key.toLowerCase()
     );
-
   }
 );
-
 
 addEventListener(
   "keyup",
-  e => {
-
+  e =>
     state.keys.delete(
       e.key.toLowerCase()
-    );
-
-  }
+    )
 );
-
 
 canvas.addEventListener(
   "mousemove",
@@ -2493,46 +2469,30 @@ canvas.addEventListener(
 
     state.mouse.y =
       e.clientY - r.top;
-
   }
 );
-
 
 canvas.addEventListener(
   "mousedown",
   e => {
 
-    if (
-      e.button === 0
-    ) {
+    if (e.button === 0) {
 
       state.mouse.down = true;
-
     }
-
   }
 );
-
 
 addEventListener(
   "mouseup",
   e => {
 
-    if (
-      e.button === 0
-    ) {
+    if (e.button === 0) {
 
       state.mouse.down = false;
-
     }
-
   }
 );
-
-
-/* =========================================================
-   DOUBLE-TAP DODGE
-   ========================================================= */
 
 let lastTap = {
   w: 0,
@@ -2540,7 +2500,6 @@ let lastTap = {
   s: 0,
   d: 0
 };
-
 
 addEventListener(
   "keydown",
@@ -2567,15 +2526,12 @@ addEventListener(
     ) {
 
       startDodge(k);
-
     }
 
     lastTap[k] =
       now;
-
   }
 );
-
 
 function equip(w) {
 
@@ -2596,7 +2552,6 @@ function equip(w) {
 
   updateHUD();
 }
-
 
 function startDodge(k) {
 
@@ -2619,16 +2574,13 @@ function startDodge(k) {
     y: d[1]
   };
 
-  state.dodgeTimer =
-    0.16;
+  state.dodgeTimer = .16;
 
-  state.dodgeCooldown =
-    1;
+  state.dodgeCooldown = 1;
 }
 
-
 /* =========================================================
-   PAUSE
+   PAUSE / TAB
    ========================================================= */
 
 function togglePause() {
@@ -2643,10 +2595,8 @@ function togglePause() {
   } else {
 
     hide("pauseMenu");
-
   }
 }
-
 
 function closePause() {
 
@@ -2655,46 +2605,37 @@ function closePause() {
   hide("pauseMenu");
 }
 
+$("resumeButton")
+  .addEventListener(
+    "click",
+    closePause
+  );
 
-$("resumeButton")?.addEventListener(
-  "click",
-  closePause
-);
+$("exitButton")
+  .addEventListener(
+    "click",
+    async () => {
 
+      closePause();
 
-$("exitButton")?.addEventListener(
-  "click",
-  async () => {
+      await saveGame();
 
-    closePause();
+      setScreen("menu");
 
-    await saveGame();
+      hide("hud");
 
-    hide("hud");
+      updateMenu();
+    }
+  );
 
-    setScreen("menu");
-
-    updateMenu();
-
-  }
-);
-
-
-$("pauseSettingsButton")?.addEventListener(
-  "click",
-  () => {
-
-    alert(
-      "Settings are paused here in V0.1 and can be expanded without changing the save system."
-    );
-
-  }
-);
-
-
-/* =========================================================
-   TAB MENU
-   ========================================================= */
+$("pauseSettingsButton")
+  .addEventListener(
+    "click",
+    () =>
+      alert(
+        "Settings are paused here in V0.1 and can be expanded without changing the save system."
+      )
+  );
 
 function toggleTab() {
 
@@ -2709,144 +2650,116 @@ function toggleTab() {
   refreshMap();
 }
 
+$("closeTab")
+  .addEventListener(
+    "click",
+    () => {
 
-$("closeTab")?.addEventListener(
-  "click",
-  () => {
+      state.paused = false;
 
-    state.paused = false;
-
-    hide("tabMenu");
-
-  }
-);
-
+      hide("tabMenu");
+    }
+  );
 
 document
   .querySelectorAll(
     ".tab-buttons button"
   )
-  .forEach(button => {
+  .forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        document
-          .querySelectorAll(
-            ".tab-buttons button"
-          )
-          .forEach(
-            b =>
-              b.classList.remove(
-                "selected"
-              )
+          document
+            .querySelectorAll(
+              ".tab-buttons button"
+            )
+            .forEach(
+              b =>
+                b.classList.remove(
+                  "selected"
+                )
+            );
+
+          button.classList.add(
+            "selected"
           );
 
-        button.classList.add(
-          "selected"
-        );
+          document
+            .querySelectorAll(
+              ".tab-page"
+            )
+            .forEach(
+              page =>
+                page.classList.add(
+                  "hidden"
+                )
+            );
 
-        document
-          .querySelectorAll(
-            ".tab-page"
-          )
-          .forEach(
-            page =>
-              page.classList.add(
-                "hidden"
-              )
-          );
-
-        const page =
           $(
             button.dataset.page +
             "Page"
-          );
-
-        if (page) {
-          page.classList.remove(
+          ).classList.remove(
             "hidden"
           );
+
+          if (
+            button.dataset.page ===
+            "items"
+          ) {
+
+            refreshItems();
+          }
+
+          if (
+            button.dataset.page ===
+            "equipment"
+          ) {
+
+            refreshEquipment();
+          }
+
+          if (
+            button.dataset.page ===
+            "map"
+          ) {
+
+            refreshMap();
+          }
         }
+      );
+    }
+  );
 
-        if (
-          button.dataset.page ===
-          "items"
-        ) {
+$("equipSword")
+  .addEventListener(
+    "click",
+    () => equip("sword")
+  );
 
-          refreshItems();
-
-        }
-
-        if (
-          button.dataset.page ===
-          "equipment"
-        ) {
-
-          refreshEquipment();
-
-        }
-
-        if (
-          button.dataset.page ===
-          "map"
-        ) {
-
-          refreshMap();
-
-        }
-
-      }
-    );
-
-  });
-
-
-$("equipSword")?.addEventListener(
-  "click",
-  () => equip("sword")
-);
-
-
-$("equipBow")?.addEventListener(
-  "click",
-  () => equip("bow")
-);
-
+$("equipBow")
+  .addEventListener(
+    "click",
+    () => equip("bow")
+  );
 
 function refreshEquipment() {
 
   const p =
     state.player;
 
-  $("equipInfo").innerHTML = `
+  $("equipInfo").innerHTML =
 
-    <p>
-      Sword:
-      ${p.sword.power} ATK —
-      ${p.sword.durability}/100 durability
-    </p>
+    `Sword: ${p.sword.power} ATK — ${p.sword.durability}/100 durability<br>` +
 
-    <p>
-      Bow:
-      ${p.bow.power} ATK —
-      ${p.bow.durability}/100 durability
-    </p>
+    `Bow: ${p.bow.power} ATK — ${p.bow.durability}/100 durability<br>` +
 
-    <p>
-      Arrows:
-      ${p.arrows}
-    </p>
+    `Arrows: ${p.arrows}<br>` +
 
-    <p>
-      Current:
-      ${p.weapon.toUpperCase()}
-    </p>
-
-  `;
+    `Current: ${p.weapon.toUpperCase()}`;
 }
-
 
 function refreshItems() {
 
@@ -2863,17 +2776,14 @@ function refreshItems() {
       ([, n]) => n > 0
     );
 
-  if (
-    !entries.length
-  ) {
+  if (!entries.length) {
 
     list.innerHTML =
       "<p class='muted'>No items.</p>";
-
   }
 
   entries.forEach(
-    ([name, value]) => {
+    ([n, v]) => {
 
       const row =
         document.createElement(
@@ -2883,45 +2793,36 @@ function refreshItems() {
       row.className =
         "shop-action";
 
-      row.innerHTML = `
-        <span>
-          ${name} × ${value}
-        </span>
-      `;
+      row.innerHTML =
+        `<span>${n} × ${v}</span>`;
 
       if (
-        name ===
+        n ===
         "Healing Medicine"
       ) {
 
-        const button =
+        const b =
           document.createElement(
             "button"
           );
 
-        button.textContent =
+        b.textContent =
           "USE";
 
-        button.onclick =
+        b.onclick =
           useMedicine;
 
-        row.appendChild(
-          button
-        );
-
+        row.appendChild(b);
       }
 
-      list.appendChild(
-        row
-      );
-
+      list.appendChild(row);
     }
   );
 
-  $("corpseCount").textContent =
+  $("corpseCount")
+    .textContent =
     state.player.corpses.length;
 }
-
 
 function refreshMap() {
 
@@ -2931,41 +2832,37 @@ function refreshMap() {
   list.innerHTML = "";
 
   state.player.discovered
-    .forEach(k => {
+    .forEach(
+      k => {
 
-      const row =
-        document.createElement(
-          "div"
-        );
+        const row =
+          document.createElement(
+            "div"
+          );
 
-      row.className =
-        "map-row";
+        row.className =
+          "map-row";
 
-      row.textContent =
-        (
-          k ===
-          state.player.island
-            ? "▲ "
-            : ""
-        ) +
-        WORLD.islands[k].name +
-        " — TRAIN STATION";
+        row.textContent =
+          (
+            k ===
+            state.player.island
+              ? "▲ "
+              : ""
+          ) +
+          WORLD.islands[k].name +
+          " — TRAIN STATION";
 
-      list.appendChild(
-        row
-      );
-
-    });
+        list.appendChild(row);
+      }
+    );
 }
-
 
 /* =========================================================
    TIME / RENT
    ========================================================= */
 
-function advanceTime(
-  hours = 1
-) {
+function advanceTime(hours = 1) {
 
   state.player.hour +=
     hours;
@@ -2987,14 +2884,11 @@ function advanceTime(
     ) {
 
       processRent();
-
     }
-
   }
 
   updateHUD();
 }
-
 
 function processRent() {
 
@@ -3026,10 +2920,8 @@ function processRent() {
     toast(
       `Rent unpaid. Debt: ${state.player.rentDebt} G.`
     );
-
   }
 }
-
 
 function sleep() {
 
@@ -3041,8 +2933,7 @@ function sleep() {
     state.player.hour
   );
 
-  state.player.hour =
-    8;
+  state.player.hour = 8;
 
   updateHUD();
 
@@ -3053,9 +2944,8 @@ function sleep() {
   );
 }
 
-
 /* =========================================================
-   MONSTER SPAWNING
+   MONSTERS
    ========================================================= */
 
 function spawnIslandMonsters() {
@@ -3066,15 +2956,11 @@ function spawnIslandMonsters() {
 
     boar: "boar",
 
-    crocodile:
-      "crocodile",
+    crocodile: "crocodile",
 
-    lizard:
-      "lizard",
+    lizard: "lizard",
 
-    eagle:
-      "eagle"
-
+    eagle: "eagle"
   };
 
   const type =
@@ -3115,22 +3001,16 @@ function spawnIslandMonsters() {
       state: "idle",
 
       attackTimer:
-        1 + Math.random(),
+        1 +
+        Math.random(),
 
       telegraph: 0,
 
       wander:
         Math.random() * 6
-
     });
-
   }
 }
-
-
-/* =========================================================
-   MONSTER AI
-   ========================================================= */
 
 function updateMonsters(dt) {
 
@@ -3142,10 +3022,12 @@ function updateMonsters(dt) {
       MONSTERS[e.type];
 
     const dx =
-      state.player.x - e.x;
+      state.player.x -
+      e.x;
 
     const dy =
-      state.player.y - e.y;
+      state.player.y -
+      e.y;
 
     const dist =
       Math.hypot(
@@ -3156,9 +3038,7 @@ function updateMonsters(dt) {
     e.wander +=
       dt;
 
-    if (
-      dist < 420
-    ) {
+    if (dist < 420) {
 
       if (
         e.telegraph > 0
@@ -3178,7 +3058,6 @@ function updateMonsters(dt) {
 
           e.attackTimer =
             1.2;
-
         }
 
       } else if (
@@ -3194,24 +3073,21 @@ function updateMonsters(dt) {
       ) {
 
         e.telegraph =
-          0.55;
+          .55;
 
       } else {
 
         e.x +=
-          dx /
-          dist *
+          dx / dist *
           m.speed *
           dt *
-          0.65;
+          .65;
 
         e.y +=
-          dy /
-          dist *
+          dy / dist *
           m.speed *
           dt *
-          0.65;
-
+          .65;
       }
 
     } else {
@@ -3221,7 +3097,7 @@ function updateMonsters(dt) {
           e.wander
         ) *
         m.speed *
-        0.12 *
+        .12 *
         dt;
 
       e.y +=
@@ -3229,26 +3105,19 @@ function updateMonsters(dt) {
           e.wander * 1.3
         ) *
         m.speed *
-        0.12 *
+        .12 *
         dt;
 
       e.attackTimer =
         Math.max(
           0,
-          e.attackTimer -
-            dt
+          e.attackTimer - dt
         );
-
     }
-
   }
 }
 
-
-function monsterHit(
-  e,
-  m
-) {
+function monsterHit(e, m) {
 
   if (
     state.dodgeTimer > 0
@@ -3261,7 +3130,6 @@ function monsterHit(
     m.atk
   );
 }
-
 
 function damagePlayer(n) {
 
@@ -3278,14 +3146,8 @@ function damagePlayer(n) {
   ) {
 
     die();
-
   }
 }
-
-
-/* =========================================================
-   PLAYER ATTACK
-   ========================================================= */
 
 function playerAttack() {
 
@@ -3329,7 +3191,6 @@ function playerAttack() {
     }
 
     state.player.arrows--;
-
   }
 
   item.durability =
@@ -3407,7 +3268,7 @@ function playerAttack() {
         (
           w === "sword"
             ? 1.0
-            : 0.14
+            : .14
         )
     ) {
 
@@ -3418,10 +3279,11 @@ function playerAttack() {
         Math.max(
           0,
           e.hp -
-            Math.max(
-              1,
-              damage - m.def
-            )
+          Math.max(
+            1,
+            damage -
+            m.def
+          )
         );
 
       hit = true;
@@ -3431,15 +3293,12 @@ function playerAttack() {
       ) {
 
         killMonster(e);
-
       }
-
     }
-
   }
 
   state.attackCooldown =
-    0.35;
+    .35;
 
   if (
     !hit &&
@@ -3447,11 +3306,9 @@ function playerAttack() {
   ) {
 
     state.attackCooldown =
-      0.25;
-
+      .25;
   }
 }
-
 
 function killMonster(e) {
 
@@ -3464,8 +3321,8 @@ function killMonster(e) {
     e.type;
 
   if (
-    state.player.corpses.length >=
-    20
+    state.player.corpses
+      .length >= 20
   ) {
 
     toast(
@@ -3475,9 +3332,8 @@ function killMonster(e) {
     return;
   }
 
-  state.player.corpses.push(
-    type
-  );
+  state.player.corpses
+    .push(type);
 
   state.monsters.splice(
     i,
@@ -3489,7 +3345,6 @@ function killMonster(e) {
   );
 }
 
-
 /* =========================================================
    DEATH
    ========================================================= */
@@ -3500,11 +3355,9 @@ function die() {
 
   state.dead = true;
 
-  state.mouse.down =
-    false;
+  state.mouse.down = false;
 
-  state.player.hp =
-    0;
+  state.player.hp = 0;
 
   show("deathScreen");
 
@@ -3522,7 +3375,6 @@ function die() {
       } else {
 
         createInitialSave();
-
       }
 
       hide("deathScreen");
@@ -3540,7 +3392,6 @@ function die() {
   );
 }
 
-
 /* =========================================================
    DRAWING
    ========================================================= */
@@ -3555,11 +3406,7 @@ function clear() {
   );
 }
 
-
-function worldToScreen(
-  x,
-  y
-) {
+function worldToScreen(x, y) {
 
   return {
     x:
@@ -3571,7 +3418,6 @@ function worldToScreen(
       state.camera.y
   };
 }
-
 
 function drawWorld() {
 
@@ -3622,128 +3468,10 @@ function drawWorld() {
     drawWildIsland(
       area.type
     );
-
   }
 
   ctx.restore();
 }
-
-
-/* =========================================================
-   WILD ISLAND
-   ========================================================= */
-
-function drawWildIsland(type) {
-
-  const b =
-    islandBounds();
-
-  ctx.fillStyle =
-    type === "forest"
-      ? "#416c3e"
-      : type === "water"
-      ? "#376f89"
-      : type === "fire"
-      ? "#513d35"
-      : type === "wind"
-      ? "#9aafa5"
-      : "#687052";
-
-  ctx.fillRect(
-    0,
-    0,
-    b.w,
-    b.h
-  );
-
-  for (
-    let i = 0;
-    i < 35;
-    i++
-  ) {
-
-    const x =
-      (i * 317) %
-      Math.max(
-        1,
-        b.w - 80
-      );
-
-    const y =
-      (i * 197) %
-      Math.max(
-        1,
-        b.h - 80
-      );
-
-    if (
-      type === "forest"
-    ) {
-
-      ctx.fillStyle =
-        "#315c35";
-
-      ctx.beginPath();
-
-      ctx.arc(
-        x,
-        y,
-        28,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-
-    } else if (
-      type === "fire"
-    ) {
-
-      ctx.fillStyle =
-        "#7b4b35";
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        x,
-        y - 30
-      );
-
-      ctx.lineTo(
-        x + 25,
-        y + 25
-      );
-
-      ctx.lineTo(
-        x - 25,
-        y + 25
-      );
-
-      ctx.closePath();
-
-      ctx.fill();
-
-    } else {
-
-      ctx.fillStyle =
-        "#53675a";
-
-      ctx.fillRect(
-        x,
-        y,
-        38,
-        38
-      );
-
-    }
-
-  }
-}
-
-
-/* =========================================================
-   CITY
-   ========================================================= */
 
 function drawCity() {
 
@@ -3784,12 +3512,10 @@ function drawCity() {
   ) {
 
     const x =
-      (i * 137) %
-      1550;
+      (i * 137) % 1550;
 
     const y =
-      (i * 211) %
-      1050;
+      (i * 211) % 1050;
 
     if (
       x > 500 &&
@@ -3812,7 +3538,6 @@ function drawCity() {
     );
 
     ctx.fill();
-
   }
 
   building(
@@ -3881,13 +3606,10 @@ function drawCity() {
 
     bench(
       350 + i * 105,
-      400 +
-        (i % 2) * 250
+      400 + (i % 2) * 250
     );
-
   }
 }
-
 
 function building(
   x,
@@ -3958,11 +3680,7 @@ function building(
   );
 }
 
-
-function station(
-  x,
-  y
-) {
+function station(x, y) {
 
   ctx.fillStyle =
     "#343b43";
@@ -4004,11 +3722,7 @@ function station(
   );
 }
 
-
-function bench(
-  x,
-  y
-) {
+function bench(x, y) {
 
   ctx.fillStyle =
     "#65492e";
@@ -4035,10 +3749,64 @@ function bench(
   );
 }
 
+function drawWildIsland(type) {
 
-/* =========================================================
-   CHARACTER
-   ========================================================= */
+  ctx.fillStyle =
+    type === "forest"
+      ? "#4f7f4d"
+
+      : type === "water"
+      ? "#447e99"
+
+      : type === "fire"
+      ? "#4a3c35"
+
+      : type === "wind"
+      ? "#a5b6a5"
+
+      : "#6c7358";
+
+  ctx.fillRect(
+    0,
+    0,
+    2200,
+    1500
+  );
+
+  for (
+    let i = 0;
+    i < 45;
+    i++
+  ) {
+
+    const x =
+      (i * 173) % 2100;
+
+    const y =
+      (i * 97) % 1400;
+
+    ctx.globalAlpha =
+      .18;
+
+    ctx.fillStyle =
+      "#ffffff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      x,
+      y,
+      25 +
+        (i % 4) * 7,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+}
 
 function drawCharacter(
   c,
@@ -4194,7 +3962,6 @@ function drawCharacter(
     );
 
     c.fill();
-
   }
 
   c.fillStyle =
@@ -4225,7 +3992,7 @@ function drawCharacter(
   );
 
   c.lineTo(
-    -17 + swing * 0.2,
+    -17 + swing * .2,
     3
   );
 
@@ -4235,7 +4002,7 @@ function drawCharacter(
   );
 
   c.lineTo(
-    17 - swing * 0.2,
+    17 - swing * .2,
     3
   );
 
@@ -4254,7 +4021,7 @@ function drawCharacter(
   );
 
   c.lineTo(
-    -8 - swing * 0.15,
+    -8 - swing * .15,
     30
   );
 
@@ -4264,7 +4031,7 @@ function drawCharacter(
   );
 
   c.lineTo(
-    8 + swing * 0.15,
+    8 + swing * .15,
     30
   );
 
@@ -4272,11 +4039,6 @@ function drawCharacter(
 
   c.restore();
 }
-
-
-/* =========================================================
-   MONSTER DRAWING
-   ========================================================= */
 
 function drawMonster(e) {
 
@@ -4297,8 +4059,7 @@ function drawMonster(e) {
   );
 
   if (
-    e.type ===
-    "boar"
+    e.type === "boar"
   ) {
 
     ctx.fillStyle =
@@ -4385,8 +4146,7 @@ function drawMonster(e) {
     ctx.fill();
 
   } else if (
-    e.type ===
-    "crocodile"
+    e.type === "crocodile"
   ) {
 
     ctx.fillStyle =
@@ -4451,8 +4211,7 @@ function drawMonster(e) {
     );
 
   } else if (
-    e.type ===
-    "lizard"
+    e.type === "lizard"
   ) {
 
     ctx.fillStyle =
@@ -4580,7 +4339,6 @@ function drawMonster(e) {
     );
 
     ctx.fill();
-
   }
 
   if (
@@ -4603,7 +4361,6 @@ function drawMonster(e) {
     );
 
     ctx.stroke();
-
   }
 
   ctx.fillStyle =
@@ -4633,7 +4390,6 @@ function drawMonster(e) {
   ctx.restore();
 }
 
-
 /* =========================================================
    DRAW
    ========================================================= */
@@ -4656,7 +4412,6 @@ function draw() {
     ) {
 
       drawMonster(e);
-
     }
 
     const p =
@@ -4692,37 +4447,9 @@ function draw() {
       );
 
       ctx.stroke();
-
     }
-
-    if (
-      state.interaction
-    ) {
-
-      const interaction =
-        $("interaction");
-
-      if (interaction) {
-
-        interaction.textContent =
-          state.interaction.prompt;
-
-        interaction.classList.remove(
-          "hidden"
-        );
-
-      }
-
-    } else {
-
-      hide("interaction");
-
-    }
-
   }
-
 }
-
 
 /* =========================================================
    UPDATE
@@ -4731,8 +4458,7 @@ function draw() {
 function update(dt) {
 
   if (
-    state.screen !==
-      "world" ||
+    state.screen !== "world" ||
     state.opening ||
     state.paused ||
     state.dialogue ||
@@ -4749,19 +4475,14 @@ function update(dt) {
   state.attackCooldown =
     Math.max(
       0,
-      state.attackCooldown -
-        dt
+      state.attackCooldown - dt
     );
 
   state.dodgeCooldown =
     Math.max(
       0,
-      state.dodgeCooldown -
-        dt
+      state.dodgeCooldown - dt
     );
-
-
-  /* DODGE */
 
   if (
     state.dodgeTimer > 0
@@ -4788,24 +4509,28 @@ function update(dt) {
     if (
       state.keys.has("w")
     ) {
+
       dy--;
     }
 
     if (
       state.keys.has("s")
     ) {
+
       dy++;
     }
 
     if (
       state.keys.has("a")
     ) {
+
       dx--;
     }
 
     if (
       state.keys.has("d")
     ) {
+
       dx++;
     }
 
@@ -4824,22 +4549,21 @@ function update(dt) {
       dy /= len;
 
       state.player.x +=
-        dx * 220 * dt;
+        dx *
+        220 *
+        dt;
 
       state.player.y +=
-        dy * 220 * dt;
+        dy *
+        220 *
+        dt;
 
       state.lastDirection = {
         x: dx,
         y: dy
       };
-
     }
-
   }
-
-
-  /* BOUNDARIES */
 
   const b =
     islandBounds();
@@ -4862,29 +4586,27 @@ function update(dt) {
       )
     );
 
-
-  /* ATTACK */
-
   if (
-    state.mouse.down
+    state.mouse.down &&
+    state.player.weapon ===
+      "sword"
   ) {
 
     playerAttack();
-
   }
 
+  if (
+    state.mouse.down &&
+    state.player.weapon ===
+      "bow"
+  ) {
 
-  /* MONSTERS */
+    playerAttack();
+  }
 
   updateMonsters(dt);
 
-
-  /* INTERACTIONS */
-
   checkInteraction();
-
-
-  /* TIME */
 
   state.dayAccumulator +=
     dt;
@@ -4898,13 +4620,10 @@ function update(dt) {
       60;
 
     advanceTime(1);
-
   }
-
 
   updateHUD();
 }
-
 
 /* =========================================================
    GAME LOOP
@@ -4914,7 +4633,7 @@ function gameLoop(now) {
 
   const dt =
     Math.min(
-      0.05,
+      .05,
       (now -
         state.lastFrame) /
         1000
@@ -4932,129 +4651,64 @@ function gameLoop(now) {
   );
 }
 
-
 /* =========================================================
-   STARTUP
+   START
    ========================================================= */
-
-/*
-   Important:
-   The script is loaded at the bottom of index.html,
-   so all HTML elements already exist here.
-*/
 
 hide("hud");
 
-hide("accountScreen");
-
-hide("mainMenu");
-
-hide("characterScreen");
-
-hide("openingScreen");
-
-hide("pauseMenu");
-
-hide("tabMenu");
-
-hide("dialogueBox");
-
-hide("shopOverlay");
-
-hide("deathScreen");
-
 setScreen("title");
 
+$("titleScreen")
+  .addEventListener(
+    "click",
+    () => {
 
-/* TITLE CLICK */
+      if (
+        state.screen ===
+        "title"
+      ) {
 
-$("titleScreen")?.addEventListener(
-  "click",
-  () => {
-
-    if (
-      state.screen ===
-      "title"
-    ) {
-
-      setScreen("account");
-
-      accountTab("login");
-
+        setScreen("account");
+      }
     }
+  );
 
-  }
-);
+$("tabMenu")
+  .addEventListener(
+    "click",
+    e => {
 
+      if (
+        e.target ===
+        $("tabMenu")
+      ) {
 
-/* TITLE KEYBOARD */
-
-addEventListener(
-  "keydown",
-  e => {
-
-    if (
-      state.screen ===
-        "title" &&
-      !e.repeat
-    ) {
-
-      e.preventDefault();
-
-      setScreen("account");
-
-      accountTab("login");
-
+        $("closeTab").click();
+      }
     }
+  );
 
-  }
-);
+$("shopOverlay")
+  .addEventListener(
+    "click",
+    e => {
 
+      if (
+        e.target ===
+        $("shopOverlay")
+      ) {
 
-/* CLICK OUTSIDE TAB MENU */
-
-$("tabMenu")?.addEventListener(
-  "click",
-  e => {
-
-    if (
-      e.target ===
-      $("tabMenu")
-    ) {
-
-      $("closeTab").click();
-
+        closeShop();
+      }
     }
-
-  }
-);
-
-
-/* CLICK OUTSIDE SHOP */
-
-$("shopOverlay")?.addEventListener(
-  "click",
-  e => {
-
-    if (
-      e.target ===
-      $("shopOverlay")
-    ) {
-
-      closeShop();
-
-    }
-
-  }
-);
-
-
-/* INITIAL CHARACTER PREVIEW */
+  );
 
 updateCharacterPreview();
 
-
-/* START */
+requestAnimationFrame(
+  gameLoop
+);
 
 requestAnimationFrame(
   gameLoop
