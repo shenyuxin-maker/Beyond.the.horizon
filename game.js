@@ -15,12 +15,9 @@
 */
 const AUTH = {
   provider: "supabase",
-
-  url: https://xabuhtsqhlpzjnfrdbgh.supabase.co,
-
+  url: "https://xabuhtsqhlpzjnfrdbgh.supabase.co",
   anonKey: "sb_publishable_xG9O5QlpiZBq_qzJ4j9Vvw_ZyR_lyJE"
 };
-
 const $ = (id) => document.getElementById(id);
 const canvas = $("gameCanvas");
 const ctx = canvas.getContext("2d");
