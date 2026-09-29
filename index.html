@@ -7,59 +7,209 @@
   <title>Beyond the Horizon</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div id="game">
-    <canvas id="gameCanvas"></canvas>
+
+<div id="app">
+
+  <!-- =====================================================
+       GAME CANVAS
+       ===================================================== -->
+
+<canvas id="gameCanvas"></canvas>
+
+  <!-- =====================================================
+       TITLE SCREEN
+       ===================================================== -->
+
+  <div id="titleScreen" class="title-screen">
+    <div>
+      <h1>BEYOND THE HORIZON</h1>
+      <p>PRESS ANY KEY / CLICK TO CONTINUE</p>
+      <p class="title-note">V0.1</p>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       ACCOUNT SCREEN
+       ===================================================== -->
+
+  <div id="accountScreen" class="screen hidden">
+    <div class="panel">
 
 ```
-<div id="titleScreen" class="screen active">
-  <div class="title-wrap">
-    <h1>BEYOND THE HORIZON</h1>
-    <p>PRESS ANY KEY / CLICK TO CONTINUE</p>
+  <h1>ACCOUNT</h1>
+
+  <div class="account-tabs">
+    <button class="tab active" data-account="login">LOG IN</button>
+    <button class="tab" data-account="signup">SIGN UP</button>
   </div>
+
+
+  <!-- LOGIN -->
+  <form id="loginForm" class="account-form">
+
+    <label>
+      Email
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+        required
+      >
+    </label>
+
+    <label>
+      Password
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="current-password"
+        required
+      >
+    </label>
+
+    <button type="submit" class="primary">LOG IN</button>
+
+    <button
+      type="button"
+      id="forgotPassword"
+      class="link-button"
+    >
+      Forgot Password?
+    </button>
+
+  </form>
+
+
+  <!-- SIGN UP -->
+  <form id="signupForm" class="account-form hidden">
+
+    <label>
+      Username
+      <input
+        id="signupUsername"
+        type="text"
+        placeholder="Username"
+        autocomplete="username"
+        required
+      >
+    </label>
+
+    <label>
+      Email
+      <input
+        id="signupEmail"
+        type="email"
+        placeholder="Email"
+        autocomplete="email"
+        required
+      >
+    </label>
+
+    <label>
+      Password
+      <input
+        id="signupPassword"
+        type="password"
+        placeholder="Password"
+        autocomplete="new-password"
+        required
+      >
+    </label>
+
+    <label>
+      Confirm Password
+      <input
+        id="signupConfirm"
+        type="password"
+        placeholder="Confirm Password"
+        autocomplete="new-password"
+        required
+      >
+    </label>
+
+    <button type="submit" class="primary">
+      CREATE ACCOUNT
+    </button>
+
+  </form>
+
+  <p id="accountMessage" class="message"></p>
+
+  <button
+    id="backToTitle"
+    type="button"
+    class="secondary"
+  >
+    BACK
+  </button>
+
 </div>
+```
 
-<div id="accountScreen" class="screen">
-  <div class="panel">
-    <h2>ACCOUNT</h2>
-
-    <div class="account-tabs">
-      <button id="loginTab" class="selected">LOG IN</button>
-      <button id="signupTab">SIGN UP</button>
-    </div>
-
-    <div id="loginForm">
-      <input id="loginUser" type="text" placeholder="Username or Email">
-      <input id="loginPassword" type="password" placeholder="Password">
-      <button id="loginButton">LOG IN</button>
-      <button class="text-button" id="forgotButton">Forgot Password?</button>
-    </div>
-
-    <div id="signupForm" class="hidden">
-      <input id="signupUsername" type="text" placeholder="Username">
-      <input id="signupEmail" type="email" placeholder="Email">
-      <input id="signupPassword" type="password" placeholder="Password">
-      <input id="signupConfirm" type="password" placeholder="Confirm Password">
-      <button id="signupButton">CREATE ACCOUNT</button>
-    </div>
-
-    <p id="accountMessage"></p>
   </div>
-</div>
 
-<div id="mainMenu" class="screen">
-  <div class="menu-panel">
-    <h1>BEYOND THE HORIZON</h1>
-    <button id="continueButton" disabled>CONTINUE</button>
-    <button id="newGameButton">NEW GAME</button>
-    <button id="settingsButton">SETTINGS</button>
-    <button id="logoutButton">LOG OUT</button>
+  <!-- =====================================================
+       MAIN MENU
+       ===================================================== -->
+
+  <div id="mainMenu" class="screen hidden">
+    <div class="menu-card">
+
+```
+  <h1>BEYOND THE HORIZON</h1>
+
+  <p id="welcomeText" class="muted"></p>
+
+  <button
+    id="continueButton"
+    class="menu-button primary"
+    disabled
+  >
+    CONTINUE
+  </button>
+
+  <button
+    id="newGameButton"
+    class="menu-button"
+  >
+    NEW GAME
+  </button>
+
+  <button
+    id="settingsButton"
+    class="menu-button"
+  >
+    SETTINGS
+  </button>
+
+  <button
+    id="logoutButton"
+    class="menu-button secondary"
+  >
+    LOG OUT
+  </button>
+
+</div>
+```
+
   </div>
-</div>
 
-<div id="characterCreation" class="screen">
-  <div class="panel creation-panel">
-    <h2>CHARACTER CREATION</h2>
+  <!-- =====================================================
+       CHARACTER CREATION
+       ===================================================== -->
+
+  <div id="characterScreen" class="screen hidden">
+
+```
+<div class="panel">
+
+  <h1>CHARACTER CREATION</h1>
+
+  <div class="creation-grid">
 
     <label>
       Gender
@@ -71,99 +221,399 @@
 
     <label>
       Skin Tone
-      <select id="skinTone">
-        <option value="1">Tone 1</option>
-        <option value="2">Tone 2</option>
-        <option value="3">Tone 3</option>
-        <option value="4">Tone 4</option>
+      <select id="skin">
+        <option value="#f1c7a7">Tone 1</option>
+        <option value="#d99b72">Tone 2</option>
+        <option value="#b96f4f">Tone 3</option>
+        <option value="#70402f">Tone 4</option>
       </select>
     </label>
 
     <label>
       Eye Color
-      <select id="eyeColor">
-        <option value="brown">Brown</option>
-        <option value="blue">Blue</option>
-        <option value="green">Green</option>
-        <option value="gray">Gray</option>
+      <select id="eyes">
+        <option value="#4b2e22">Brown</option>
+        <option value="#3c72a8">Blue</option>
+        <option value="#47734b">Green</option>
+        <option value="#666b73">Gray</option>
       </select>
     </label>
 
     <label>
       Hairstyle
-      <select id="hairstyle">
-        <option value="1">Style 1</option>
-        <option value="2">Style 2</option>
-        <option value="3">Style 3</option>
+      <select id="hair">
+        <option value="0">Style 1</option>
+        <option value="1">Style 2</option>
+        <option value="2">Style 3</option>
       </select>
     </label>
 
-    <button id="confirmCharacter">CONFIRM</button>
   </div>
-</div>
 
-<div id="pauseMenu" class="overlay hidden">
-  <div class="panel">
-    <h2>PAUSED</h2>
-    <button id="resumeButton">RESUME</button>
-    <button id="saveButton">SAVE</button>
-    <button id="loadButton">LOAD</button>
-    <button id="pauseSettingsButton">SETTINGS</button>
-    <button id="exitButton">EXIT TO MAIN MENU</button>
+  <div
+    id="characterPreview"
+    class="character-preview"
+  ></div>
+
+  <div class="choices">
+    <button
+      id="cancelCharacter"
+      class="secondary"
+      type="button"
+    >
+      CANCEL
+    </button>
+
+    <button
+      id="confirmCharacter"
+      class="primary"
+      type="button"
+    >
+      CONFIRM
+    </button>
   </div>
-</div>
 
-<div id="tabMenu" class="overlay hidden">
-  <div class="tab-panel">
-    <div class="tab-buttons">
-      <button data-page="equipment" class="selected">EQUIPMENT</button>
-      <button data-page="items">ITEMS</button>
-      <button data-page="map">MAP</button>
-    </div>
-
-    <div id="equipmentPage" class="tab-page">
-      <h2>EQUIPMENT</h2>
-      <p id="equipmentText"></p>
-    </div>
-
-    <div id="itemsPage" class="tab-page hidden">
-      <h2>ITEMS</h2>
-      <p id="itemsText"></p>
-    </div>
-
-    <div id="mapPage" class="tab-page hidden">
-      <h2>MAP</h2>
-      <p>CENTRAL CITY</p>
-      <p>▲ YOU</p>
-      <p>Explored Islands: 1</p>
-    </div>
-  </div>
-</div>
-
-<div id="hud">
-  <div id="hpHud">HP <span id="hpBar">██████████</span> <span id="hpText">100 / 100</span></div>
-  <div id="dayHud">DAY 1</div>
-  <div id="timeHud">08:00</div>
-  <div id="weaponHud">SWORD</div>
-  <div id="interactionPrompt"></div>
-</div>
-
-<div id="dialogue" class="overlay hidden">
-  <div class="dialogue-box">
-    <strong id="dialogueName"></strong>
-    <p id="dialogueText"></p>
-    <button id="dialogueContinue">CONTINUE</button>
-  </div>
-</div>
-
-<div id="deathScreen" class="screen hidden">
-  <div class="death-text">YOU DIED</div>
 </div>
 ```
 
   </div>
 
-  <script src="game.js"></script>
+  <!-- =====================================================
+       OPENING STORY
+       ===================================================== -->
+
+  <div id="openingScreen" class="opening hidden">
+
+```
+<div class="opening-box">
+
+  <h1 id="openingTitle">
+    The Horizon
+  </h1>
+
+  <p id="openingText"></p>
+
+  <button
+    id="openingNext"
+    class="primary"
+    type="button"
+  >
+    CONTINUE
+  </button>
+
+  <button
+    id="skipOpening"
+    class="secondary"
+    type="button"
+  >
+    SKIP
+  </button>
+
+</div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       HUD
+       ===================================================== -->
+
+  <div id="hud">
+
+```
+<div class="hud-top">
+
+  <div class="hp-wrap">
+
+    <div class="hp-label">
+      HP:
+      <span id="hpText">100 / 100</span>
+    </div>
+
+    <div class="hp-bar">
+      <div id="hpFill"></div>
+    </div>
+
+  </div>
+
+
+  <div class="hud-stat">
+
+    <span id="dayText">DAY 1</span>
+
+    <span id="timeText">08:00</span>
+
+    <span id="moneyText">500 G</span>
+
+    <span id="weaponText">SWORD</span>
+
+  </div>
+
+</div>
+
+
+<div
+  id="interaction"
+  class="interaction hidden"
+></div>
+
+
+<div
+  id="toast"
+  class="toast"
+></div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       PAUSE MENU
+       ===================================================== -->
+
+  <div
+    id="pauseMenu"
+    class="overlay hidden"
+  >
+
+```
+<div class="panel">
+
+  <h1>PAUSED</h1>
+
+  <button
+    id="resumeButton"
+    class="primary"
+  >
+    RESUME
+  </button>
+
+  <button id="saveButton">
+    SAVE
+  </button>
+
+  <button id="loadButton">
+    LOAD
+  </button>
+
+  <button id="pauseSettingsButton">
+    SETTINGS
+  </button>
+
+  <button
+    id="exitButton"
+    class="secondary"
+  >
+    EXIT TO MAIN MENU
+  </button>
+
+</div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       TAB MENU
+       ===================================================== -->
+
+  <div
+    id="tabMenu"
+    class="overlay hidden"
+  >
+
+```
+<div class="panel large-panel">
+
+  <div class="tab-buttons">
+
+    <button
+      data-page="equipment"
+      class="selected"
+    >
+      EQUIPMENT
+    </button>
+
+    <button data-page="items">
+      ITEMS
+    </button>
+
+    <button data-page="map">
+      MAP
+    </button>
+
+  </div>
+
+
+  <!-- EQUIPMENT -->
+  <div
+    id="equipmentPage"
+    class="tab-page"
+  >
+
+    <h1>EQUIPMENT</h1>
+
+    <div id="equipInfo">
+      Sword: 20 ATK — 100/100 durability<br>
+      Bow: 15 ATK — 100/100 durability<br>
+      Arrows: 50<br>
+      Current: SWORD
+    </div>
+
+    <div class="choices">
+
+      <button id="equipSword">
+        EQUIP SWORD
+      </button>
+
+      <button id="equipBow">
+        EQUIP BOW
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ITEMS -->
+  <div
+    id="itemsPage"
+    class="tab-page hidden"
+  >
+
+    <h1>ITEMS</h1>
+
+    <div id="itemsList"></div>
+
+    <p class="muted">
+      Corpses:
+      <span id="corpseCount">0</span>
+    </p>
+
+  </div>
+
+
+  <!-- MAP -->
+  <div
+    id="mapPage"
+    class="tab-page hidden"
+  >
+
+    <h1>MAP</h1>
+
+    <div
+      id="mapList"
+      class="map-list"
+    ></div>
+
+  </div>
+
+
+  <button
+    id="closeTab"
+    class="secondary"
+    type="button"
+  >
+    CLOSE
+  </button>
+
+</div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       DIALOGUE
+       ===================================================== -->
+
+  <div
+    id="dialogueBox"
+    class="dialogue hidden"
+  >
+
+```
+<div class="dialogue-inner">
+
+  <div
+    id="dialogueName"
+    class="dialogue-name"
+  ></div>
+
+  <p id="dialogueText"></p>
+
+  <div
+    id="dialogueChoices"
+    class="choices"
+  ></div>
+
+  <button
+    id="dialogueContinue"
+    class="primary"
+    type="button"
+  >
+    CONTINUE
+  </button>
+
+</div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       SHOP
+       ===================================================== -->
+
+  <div
+    id="shopOverlay"
+    class="overlay hidden"
+  >
+
+```
+<div class="panel shop-panel">
+
+  <h1 id="shopTitle">
+    SHOP
+  </h1>
+
+  <div id="shopContent"></div>
+
+  <button
+    id="closeShop"
+    class="secondary"
+    type="button"
+  >
+    CLOSE
+  </button>
+
+</div>
+```
+
+  </div>
+
+  <!-- =====================================================
+       DEATH SCREEN
+       ===================================================== -->
+
+  <div
+    id="deathScreen"
+    class="death-screen hidden"
+  >
+
+```
+<div>YOU DIED</div>
+
+<small>
+  Returning to your last save...
+</small>
+```
+
+  </div>
+
+</div>
+
+<!-- =======================================================
+     GAME SCRIPT
+     ======================================================= -->
+
+<script src="game.js"></script>
 
 </body>
 </html>
