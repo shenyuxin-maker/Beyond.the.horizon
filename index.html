@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -15,13 +14,12 @@
   <!-- =====================================================
        GAME CANVAS
        ===================================================== -->
+  <canvas id="gameCanvas"></canvas>
 
-<canvas id="gameCanvas"></canvas>
 
   <!-- =====================================================
        TITLE SCREEN
        ===================================================== -->
-
   <div id="titleScreen" class="title-screen">
     <div>
       <h1>BEYOND THE HORIZON</h1>
@@ -30,590 +28,733 @@
     </div>
   </div>
 
+
   <!-- =====================================================
        ACCOUNT SCREEN
        ===================================================== -->
-
   <div id="accountScreen" class="screen hidden">
+
     <div class="panel">
 
-```
-  <h1>ACCOUNT</h1>
+      <h1>ACCOUNT</h1>
 
-  <div class="account-tabs">
-    <button class="tab active" data-account="login">LOG IN</button>
-    <button class="tab" data-account="signup">SIGN UP</button>
+      <div class="account-tabs">
+        <button
+          type="button"
+          class="tab active"
+          data-account="login"
+        >
+          LOG IN
+        </button>
+
+        <button
+          type="button"
+          class="tab"
+          data-account="signup"
+        >
+          SIGN UP
+        </button>
+      </div>
+
+
+      <!-- ================= LOGIN ================= -->
+
+      <form id="loginForm" class="account-form">
+
+        <label>
+          Email
+          <input
+            id="loginEmail"
+            type="email"
+            placeholder="Email"
+            autocomplete="email"
+            required
+          >
+        </label>
+
+        <label>
+          Password
+          <input
+            id="loginPassword"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+          >
+        </label>
+
+        <button
+          type="submit"
+          class="primary"
+        >
+          LOG IN
+        </button>
+
+        <button
+          type="button"
+          id="forgotPassword"
+          class="link-button"
+        >
+          Forgot Password?
+        </button>
+
+      </form>
+
+
+      <!-- ================= SIGN UP ================= -->
+
+      <form
+        id="signupForm"
+        class="account-form hidden"
+      >
+
+        <label>
+          Username
+          <input
+            id="signupUsername"
+            type="text"
+            placeholder="Username"
+            autocomplete="username"
+            required
+          >
+        </label>
+
+        <label>
+          Email
+          <input
+            id="signupEmail"
+            type="email"
+            placeholder="Email"
+            autocomplete="email"
+            required
+          >
+        </label>
+
+        <label>
+          Password
+          <input
+            id="signupPassword"
+            type="password"
+            placeholder="Password"
+            autocomplete="new-password"
+            required
+          >
+        </label>
+
+        <label>
+          Confirm Password
+          <input
+            id="signupConfirm"
+            type="password"
+            placeholder="Confirm Password"
+            autocomplete="new-password"
+            required
+          >
+        </label>
+
+        <button
+          type="submit"
+          class="primary"
+        >
+          CREATE ACCOUNT
+        </button>
+
+      </form>
+
+
+      <!-- ACCOUNT MESSAGE -->
+
+      <p
+        id="accountMessage"
+        class="message"
+      ></p>
+
+
+      <!-- BACK -->
+
+      <button
+        id="backToTitle"
+        type="button"
+        class="secondary"
+      >
+        BACK
+      </button>
+
+    </div>
+
   </div>
 
-
-  <!-- LOGIN -->
-  <form id="loginForm" class="account-form">
-
-    <label>
-      Email
-      <input
-        id="loginEmail"
-        type="email"
-        placeholder="Email"
-        autocomplete="email"
-        required
-      >
-    </label>
-
-    <label>
-      Password
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Password"
-        autocomplete="current-password"
-        required
-      >
-    </label>
-
-    <button type="submit" class="primary">LOG IN</button>
-
-    <button
-      type="button"
-      id="forgotPassword"
-      class="link-button"
-    >
-      Forgot Password?
-    </button>
-
-  </form>
-
-
-  <!-- SIGN UP -->
-  <form id="signupForm" class="account-form hidden">
-
-    <label>
-      Username
-      <input
-        id="signupUsername"
-        type="text"
-        placeholder="Username"
-        autocomplete="username"
-        required
-      >
-    </label>
-
-    <label>
-      Email
-      <input
-        id="signupEmail"
-        type="email"
-        placeholder="Email"
-        autocomplete="email"
-        required
-      >
-    </label>
-
-    <label>
-      Password
-      <input
-        id="signupPassword"
-        type="password"
-        placeholder="Password"
-        autocomplete="new-password"
-        required
-      >
-    </label>
-
-    <label>
-      Confirm Password
-      <input
-        id="signupConfirm"
-        type="password"
-        placeholder="Confirm Password"
-        autocomplete="new-password"
-        required
-      >
-    </label>
-
-    <button type="submit" class="primary">
-      CREATE ACCOUNT
-    </button>
-
-  </form>
-
-  <p id="accountMessage" class="message"></p>
-
-  <button
-    id="backToTitle"
-    type="button"
-    class="secondary"
-  >
-    BACK
-  </button>
-
-</div>
-```
-
-  </div>
 
   <!-- =====================================================
        MAIN MENU
        ===================================================== -->
-
   <div id="mainMenu" class="screen hidden">
+
     <div class="menu-card">
 
-```
-  <h1>BEYOND THE HORIZON</h1>
+      <h1>BEYOND THE HORIZON</h1>
 
-  <p id="welcomeText" class="muted"></p>
+      <p
+        id="welcomeText"
+        class="muted"
+      ></p>
 
-  <button
-    id="continueButton"
-    class="menu-button primary"
-    disabled
-  >
-    CONTINUE
-  </button>
+      <button
+        id="continueButton"
+        class="menu-button primary"
+        disabled
+      >
+        CONTINUE
+      </button>
 
-  <button
-    id="newGameButton"
-    class="menu-button"
-  >
-    NEW GAME
-  </button>
+      <button
+        id="newGameButton"
+        class="menu-button"
+      >
+        NEW GAME
+      </button>
 
-  <button
-    id="settingsButton"
-    class="menu-button"
-  >
-    SETTINGS
-  </button>
+      <button
+        id="settingsButton"
+        class="menu-button"
+      >
+        SETTINGS
+      </button>
 
-  <button
-    id="logoutButton"
-    class="menu-button secondary"
-  >
-    LOG OUT
-  </button>
+      <button
+        id="logoutButton"
+        class="menu-button secondary"
+      >
+        LOG OUT
+      </button>
 
-</div>
-```
+    </div>
 
   </div>
+
 
   <!-- =====================================================
        CHARACTER CREATION
        ===================================================== -->
-
   <div id="characterScreen" class="screen hidden">
 
-```
-<div class="panel">
+    <div class="panel">
 
-  <h1>CHARACTER CREATION</h1>
+      <h1>CHARACTER CREATION</h1>
 
-  <div class="creation-grid">
+      <div class="creation-grid">
 
-    <label>
-      Gender
-      <select id="gender">
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-      </select>
-    </label>
+        <!-- GENDER -->
 
-    <label>
-      Skin Tone
-      <select id="skin">
-        <option value="#f1c7a7">Tone 1</option>
-        <option value="#d99b72">Tone 2</option>
-        <option value="#b96f4f">Tone 3</option>
-        <option value="#70402f">Tone 4</option>
-      </select>
-    </label>
+        <label>
+          Gender
 
-    <label>
-      Eye Color
-      <select id="eyes">
-        <option value="#4b2e22">Brown</option>
-        <option value="#3c72a8">Blue</option>
-        <option value="#47734b">Green</option>
-        <option value="#666b73">Gray</option>
-      </select>
-    </label>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </label>
 
-    <label>
-      Hairstyle
-      <select id="hair">
-        <option value="0">Style 1</option>
-        <option value="1">Style 2</option>
-        <option value="2">Style 3</option>
-      </select>
-    </label>
+
+        <!-- SKIN -->
+
+        <label>
+          Skin Tone
+
+          <select id="skin">
+
+            <option value="#f1c7a7">
+              Tone 1
+            </option>
+
+            <option value="#d99b72">
+              Tone 2
+            </option>
+
+            <option value="#b96f4f">
+              Tone 3
+            </option>
+
+            <option value="#70402f">
+              Tone 4
+            </option>
+
+          </select>
+        </label>
+
+
+        <!-- EYES -->
+
+        <label>
+          Eye Color
+
+          <select id="eyes">
+
+            <option value="#4b2e22">
+              Brown
+            </option>
+
+            <option value="#3c72a8">
+              Blue
+            </option>
+
+            <option value="#47734b">
+              Green
+            </option>
+
+            <option value="#666b73">
+              Gray
+            </option>
+
+          </select>
+        </label>
+
+
+        <!-- HAIR -->
+
+        <label>
+          Hairstyle
+
+          <select id="hair">
+
+            <option value="0">
+              Style 1
+            </option>
+
+            <option value="1">
+              Style 2
+            </option>
+
+            <option value="2">
+              Style 3
+            </option>
+
+          </select>
+        </label>
+
+      </div>
+
+
+      <!-- CHARACTER PREVIEW -->
+
+      <div
+        id="characterPreview"
+        class="character-preview"
+      ></div>
+
+
+      <!-- CHARACTER BUTTONS -->
+
+      <div class="choices">
+
+        <button
+          id="cancelCharacter"
+          type="button"
+          class="secondary"
+        >
+          CANCEL
+        </button>
+
+        <button
+          id="confirmCharacter"
+          type="button"
+          class="primary"
+        >
+          CONFIRM
+        </button>
+
+      </div>
+
+    </div>
 
   </div>
 
-  <div
-    id="characterPreview"
-    class="character-preview"
-  ></div>
-
-  <div class="choices">
-    <button
-      id="cancelCharacter"
-      class="secondary"
-      type="button"
-    >
-      CANCEL
-    </button>
-
-    <button
-      id="confirmCharacter"
-      class="primary"
-      type="button"
-    >
-      CONFIRM
-    </button>
-  </div>
-
-</div>
-```
-
-  </div>
 
   <!-- =====================================================
-       OPENING STORY
+       OPENING
        ===================================================== -->
-
-  <div id="openingScreen" class="opening hidden">
-
-```
-<div class="opening-box">
-
-  <h1 id="openingTitle">
-    The Horizon
-  </h1>
-
-  <p id="openingText"></p>
-
-  <button
-    id="openingNext"
-    class="primary"
-    type="button"
+  <div
+    id="openingScreen"
+    class="opening hidden"
   >
-    CONTINUE
-  </button>
 
-  <button
-    id="skipOpening"
-    class="secondary"
-    type="button"
-  >
-    SKIP
-  </button>
+    <div class="opening-box">
 
-</div>
-```
+      <h1 id="openingTitle">
+        The Horizon
+      </h1>
+
+      <p id="openingText"></p>
+
+      <button
+        id="openingNext"
+        type="button"
+        class="primary"
+      >
+        CONTINUE
+      </button>
+
+      <button
+        id="skipOpening"
+        type="button"
+        class="secondary"
+      >
+        SKIP
+      </button>
+
+    </div>
 
   </div>
+
 
   <!-- =====================================================
        HUD
        ===================================================== -->
-
   <div id="hud">
 
-```
-<div class="hud-top">
+    <div class="hud-top">
 
-  <div class="hp-wrap">
+      <!-- HP -->
 
-    <div class="hp-label">
-      HP:
-      <span id="hpText">100 / 100</span>
-    </div>
+      <div class="hp-wrap">
 
-    <div class="hp-bar">
-      <div id="hpFill"></div>
-    </div>
+        <div class="hp-label">
+          HP
+          <span id="hpText">100 / 100</span>
+        </div>
 
-  </div>
+        <div class="hp-bar">
+          <div id="hpFill"></div>
+        </div>
 
-
-  <div class="hud-stat">
-
-    <span id="dayText">DAY 1</span>
-
-    <span id="timeText">08:00</span>
-
-    <span id="moneyText">500 G</span>
-
-    <span id="weaponText">SWORD</span>
-
-  </div>
-
-</div>
+      </div>
 
 
-<div
-  id="interaction"
-  class="interaction hidden"
-></div>
+      <!-- DAY / TIME / MONEY / WEAPON -->
 
+      <div class="hud-stat">
 
-<div
-  id="toast"
-  class="toast"
-></div>
-```
+        <span id="dayText">
+          DAY 1
+        </span>
 
-  </div>
+        <span id="timeText">
+          08:00
+        </span>
 
-  <!-- =====================================================
-       PAUSE MENU
-       ===================================================== -->
+        <span id="moneyText">
+          500 G
+        </span>
 
-  <div
-    id="pauseMenu"
-    class="overlay hidden"
-  >
+        <span id="weaponText">
+          SWORD
+        </span>
 
-```
-<div class="panel">
-
-  <h1>PAUSED</h1>
-
-  <button
-    id="resumeButton"
-    class="primary"
-  >
-    RESUME
-  </button>
-
-  <button id="saveButton">
-    SAVE
-  </button>
-
-  <button id="loadButton">
-    LOAD
-  </button>
-
-  <button id="pauseSettingsButton">
-    SETTINGS
-  </button>
-
-  <button
-    id="exitButton"
-    class="secondary"
-  >
-    EXIT TO MAIN MENU
-  </button>
-
-</div>
-```
-
-  </div>
-
-  <!-- =====================================================
-       TAB MENU
-       ===================================================== -->
-
-  <div
-    id="tabMenu"
-    class="overlay hidden"
-  >
-
-```
-<div class="panel large-panel">
-
-  <div class="tab-buttons">
-
-    <button
-      data-page="equipment"
-      class="selected"
-    >
-      EQUIPMENT
-    </button>
-
-    <button data-page="items">
-      ITEMS
-    </button>
-
-    <button data-page="map">
-      MAP
-    </button>
-
-  </div>
-
-
-  <!-- EQUIPMENT -->
-  <div
-    id="equipmentPage"
-    class="tab-page"
-  >
-
-    <h1>EQUIPMENT</h1>
-
-    <div id="equipInfo">
-      Sword: 20 ATK — 100/100 durability<br>
-      Bow: 15 ATK — 100/100 durability<br>
-      Arrows: 50<br>
-      Current: SWORD
-    </div>
-
-    <div class="choices">
-
-      <button id="equipSword">
-        EQUIP SWORD
-      </button>
-
-      <button id="equipBow">
-        EQUIP BOW
-      </button>
+      </div>
 
     </div>
 
-  </div>
 
-
-  <!-- ITEMS -->
-  <div
-    id="itemsPage"
-    class="tab-page hidden"
-  >
-
-    <h1>ITEMS</h1>
-
-    <div id="itemsList"></div>
-
-    <p class="muted">
-      Corpses:
-      <span id="corpseCount">0</span>
-    </p>
-
-  </div>
-
-
-  <!-- MAP -->
-  <div
-    id="mapPage"
-    class="tab-page hidden"
-  >
-
-    <h1>MAP</h1>
+    <!-- INTERACTION PROMPT -->
 
     <div
-      id="mapList"
-      class="map-list"
+      id="interaction"
+      class="interaction hidden"
+    ></div>
+
+
+    <!-- TOAST -->
+
+    <div
+      id="toast"
+      class="toast"
     ></div>
 
   </div>
 
 
-  <button
-    id="closeTab"
-    class="secondary"
-    type="button"
+  <!-- =====================================================
+       PAUSE MENU
+       ===================================================== -->
+  <div
+    id="pauseMenu"
+    class="overlay hidden"
   >
-    CLOSE
-  </button>
 
-</div>
-```
+    <div class="panel">
+
+      <h1>PAUSED</h1>
+
+      <button
+        id="resumeButton"
+        class="primary"
+        type="button"
+      >
+        RESUME
+      </button>
+
+      <button
+        id="saveButton"
+        type="button"
+      >
+        SAVE
+      </button>
+
+      <button
+        id="loadButton"
+        type="button"
+      >
+        LOAD
+      </button>
+
+      <button
+        id="pauseSettingsButton"
+        type="button"
+      >
+        SETTINGS
+      </button>
+
+      <button
+        id="exitButton"
+        class="secondary"
+        type="button"
+      >
+        EXIT TO MAIN MENU
+      </button>
+
+    </div>
 
   </div>
+
+
+  <!-- =====================================================
+       TAB MENU
+       ===================================================== -->
+  <div
+    id="tabMenu"
+    class="overlay hidden"
+  >
+
+    <div class="panel large-panel">
+
+      <!-- TAB BUTTONS -->
+
+      <div class="tab-buttons">
+
+        <button
+          data-page="equipment"
+          class="selected"
+          type="button"
+        >
+          EQUIPMENT
+        </button>
+
+        <button
+          data-page="items"
+          type="button"
+        >
+          ITEMS
+        </button>
+
+        <button
+          data-page="map"
+          type="button"
+        >
+          MAP
+        </button>
+
+      </div>
+
+
+      <!-- ================= EQUIPMENT ================= -->
+
+      <div
+        id="equipmentPage"
+        class="tab-page"
+      >
+
+        <h1>EQUIPMENT</h1>
+
+        <div id="equipInfo"></div>
+
+        <div class="choices">
+
+          <button
+            id="equipSword"
+            type="button"
+          >
+            EQUIP SWORD
+          </button>
+
+          <button
+            id="equipBow"
+            type="button"
+          >
+            EQUIP BOW
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================= ITEMS ================= -->
+
+      <div
+        id="itemsPage"
+        class="tab-page hidden"
+      >
+
+        <h1>ITEMS</h1>
+
+        <div id="itemsList"></div>
+
+        <p>
+          Corpses:
+          <span id="corpseCount">0</span>
+        </p>
+
+      </div>
+
+
+      <!-- ================= MAP ================= -->
+
+      <div
+        id="mapPage"
+        class="tab-page hidden"
+      >
+
+        <h1>MAP</h1>
+
+        <div
+          id="mapList"
+          class="map-list"
+        ></div>
+
+      </div>
+
+
+      <!-- CLOSE -->
+
+      <button
+        id="closeTab"
+        class="secondary"
+        type="button"
+      >
+        CLOSE
+      </button>
+
+    </div>
+
+  </div>
+
 
   <!-- =====================================================
        DIALOGUE
        ===================================================== -->
-
   <div
     id="dialogueBox"
     class="dialogue hidden"
   >
 
-```
-<div class="dialogue-inner">
+    <div class="dialogue-inner">
 
-  <div
-    id="dialogueName"
-    class="dialogue-name"
-  ></div>
+      <div
+        id="dialogueName"
+        class="dialogue-name"
+      ></div>
 
-  <p id="dialogueText"></p>
+      <p id="dialogueText"></p>
 
-  <div
-    id="dialogueChoices"
-    class="choices"
-  ></div>
 
-  <button
-    id="dialogueContinue"
-    class="primary"
-    type="button"
-  >
-    CONTINUE
-  </button>
+      <!-- DYNAMIC DIALOGUE CHOICES -->
 
-</div>
-```
+      <div
+        id="dialogueChoices"
+        class="choices"
+      ></div>
+
+
+      <button
+        id="dialogueContinue"
+        type="button"
+        class="primary"
+      >
+        CONTINUE
+      </button>
+
+    </div>
 
   </div>
 
-  <!-- =====================================================
-       SHOP
-       ===================================================== -->
 
+  <!-- =====================================================
+       SHOP OVERLAY
+       ===================================================== -->
   <div
     id="shopOverlay"
     class="overlay hidden"
   >
 
-```
-<div class="panel shop-panel">
+    <div class="panel shop-panel">
 
-  <h1 id="shopTitle">
-    SHOP
-  </h1>
+      <h1 id="shopTitle">
+        SHOP
+      </h1>
 
-  <div id="shopContent"></div>
 
-  <button
-    id="closeShop"
-    class="secondary"
-    type="button"
-  >
-    CLOSE
-  </button>
+      <!--
+        The contents of this area are generated by game.js.
+        Examples:
+        - Hunter Company
+        - Processing Shop
+        - Mall
+        - Train Station
+        - House
+      -->
 
-</div>
-```
+      <div id="shopContent"></div>
+
+
+      <button
+        id="closeShop"
+        class="secondary"
+        type="button"
+      >
+        CLOSE
+      </button>
+
+    </div>
 
   </div>
+
 
   <!-- =====================================================
        DEATH SCREEN
        ===================================================== -->
-
   <div
     id="deathScreen"
     class="death-screen hidden"
   >
 
-```
-<div>YOU DIED</div>
+    <div>
+      YOU DIED
+    </div>
 
-<small>
-  Returning to your last save...
-</small>
-```
+    <small>
+      Returning to your last save...
+    </small>
 
   </div>
 
+
 </div>
 
-<!-- =======================================================
-     GAME SCRIPT
-     ======================================================= -->
 
-<script src="game.js"></script>
+<!-- =====================================================
+     GAME SCRIPT
+     ===================================================== -->
+<script src="./game.js"></script>
 
 </body>
 </html>
