@@ -226,28 +226,6 @@ const state = {
     down: false
   },
 
-     // ===== V0.2 COMBAT =====
-  dodge: {
-    active: false,
-    direction: null,
-    timer: 0,
-    cooldown: 0
-  },
-
-  combat: {
-    charging: false,
-    chargeTime: 0,
-    attacking: false
-  },
-
-  // ===== V0.2 WEAPON =====
-  weapon: {
-    equipped: "sword",
-    swordDurability: 100,
-    bowDurability: 100,
-    arrows: 50
-  },
-
   // ===== V0.2 WORLD =====
   world: {
     cameraX: 0,
@@ -261,7 +239,7 @@ const state = {
 
   // ===== V0.2 INTERACTION =====
   nearbyInteractable: null,
-   
+
   lastFrame: performance.now(),
 
   camera: {
@@ -270,8 +248,6 @@ const state = {
   },
 
   player: initialPlayer(),
-
-  monsters: [],
 
   particles: [],
 
@@ -282,6 +258,7 @@ const state = {
     y: 0
   },
 
+  // ===== COMBAT =====
   attackCooldown: 0,
   dodgeCooldown: 0,
   dodgeTimer: 0,
@@ -293,16 +270,20 @@ const state = {
 
   dayAccumulator: 0,
 
+  // ===== ACCOUNT =====
   user: null,
 
   session: null,
 
   accountReady: false,
 
+  // ===== OPENING =====
   openingIndex: 0,
 
+  // ===== UI =====
   toastTimer: 0,
 
+  // ===== NPC ANIMATION =====
   npcAnim: 0
 };
 
