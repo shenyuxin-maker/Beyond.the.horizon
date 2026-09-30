@@ -157,17 +157,22 @@ const MATERIAL_PRICES = {
 };
 
 const initialPlayer = () => ({
+  // ===== POSITION =====
   x: 790,
   y: 540,
 
+  // ===== HP =====
   hp: 100,
   maxHp: 100,
 
-  money: 500,
+  // ===== ECONOMY =====
+  money: 100,
 
+  // ===== TIME =====
   day: 1,
   hour: 8,
 
+  // ===== WEAPON =====
   weapon: "sword",
 
   sword: {
@@ -184,19 +189,23 @@ const initialPlayer = () => ({
 
   arrows: 50,
 
+  // ===== INVENTORY =====
   inventory: {},
 
+  // Monster corpses carried by the player
   corpses: [],
 
+  // Maximum corpse capacity
+  maxCorpseCapacity: 20,
+
+  // ===== WORLD LOCATION =====
   island: "central",
 
   discovered: [
-    "central",
-    "forest"
+    "central"
   ],
 
-  save: null,
-
+  // ===== CHARACTER =====
   character: {
     gender: "male",
     skin: "#f1c7a7",
@@ -204,9 +213,12 @@ const initialPlayer = () => ({
     hair: 0
   },
 
+  // ===== RENT =====
   rentDebt: 0,
+  lastRentDay: 0,
 
-  lastRentDay: 0
+  // ===== SAVE =====
+  save: null
 });
 
 const state = {
