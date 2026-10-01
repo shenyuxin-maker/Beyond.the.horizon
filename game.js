@@ -5169,7 +5169,3 @@ updateCharacterPreview();
 requestAnimationFrame(
   gameLoop
 );
-
-requestAnimationFrame(
-  gameLoop
-);
