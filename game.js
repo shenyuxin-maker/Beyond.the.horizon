@@ -233,10 +233,11 @@ const state = {
   keys: new Set(),
 
   mouse: {
-    x: 0,
-    y: 0,
-    down: false
-  },
+  x: 0,
+  y: 0,
+  down: false,
+  downTime: 0
+},
 
   // ===== V0.2 WORLD =====
   world: {
@@ -2366,6 +2367,12 @@ addEventListener(
   "keydown",
   e => {
 
+    const k =
+      e.key.toLowerCase();
+
+
+    // ===== TAB =====
+
     if (e.key === "Tab") {
 
       e.preventDefault();
@@ -2383,6 +2390,9 @@ addEventListener(
 
       return;
     }
+
+
+    // ===== ESC =====
 
     if (e.key === "Escape") {
 
@@ -2417,6 +2427,9 @@ addEventListener(
       return;
     }
 
+
+    // ===== WORLD ONLY =====
+
     if (
       state.screen !== "world" ||
       state.opening ||
@@ -2427,6 +2440,9 @@ addEventListener(
 
       return;
     }
+
+
+    // ===== WEAPON SWITCH =====
 
     if (
       ["1", "2"].includes(
@@ -2443,10 +2459,10 @@ addEventListener(
       return;
     }
 
-    if (
-      e.key.toLowerCase() ===
-      "e"
-    ) {
+
+    // ===== INTERACT =====
+
+    if (k === "e") {
 
       if (
         state.interaction
@@ -2459,29 +2475,81 @@ addEventListener(
       return;
     }
 
-    if (
-      e.key.toLowerCase() ===
-      "q"
-    ) {
+
+    // ===== MEDICINE =====
+
+    if (k === "q") {
 
       useMedicine();
 
       return;
     }
 
-    state.keys.add(
-      e.key.toLowerCase()
-    );
+
+    // ===== MOVEMENT KEYS =====
+
+    if (
+      ["w", "a", "s", "d"].includes(k)
+    ) {
+
+      /*
+        Double tap:
+        WW / AA / SS / DD = Dodge
+
+        A repeated key event is ignored so
+        holding the key does not trigger dodge.
+      */
+
+      if (!e.repeat) {
+
+        const now =
+          performance.now();
+
+        if (
+          now - lastTap[k] <
+          280
+        ) {
+
+          startDodge(k);
+        }
+
+        lastTap[k] =
+          now;
+      }
+
+      state.keys.add(k);
+
+      return;
+    }
+
+
+    // ===== SHIFT RUN =====
+
+    if (k === "shift") {
+
+      state.keys.add("shift");
+
+      return;
+    }
   }
 );
 
+
 addEventListener(
   "keyup",
-  e =>
-    state.keys.delete(
-      e.key.toLowerCase()
-    )
+  e => {
+
+    const k =
+      e.key.toLowerCase();
+
+    state.keys.delete(k);
+  }
 );
+
+
+// =========================================================
+// MOUSE
+// =========================================================
 
 canvas.addEventListener(
   "mousemove",
@@ -2498,13 +2566,19 @@ canvas.addEventListener(
   }
 );
 
+
 canvas.addEventListener(
   "mousedown",
   e => {
 
-    if (e.button === 0) {
+    if (
+      e.button === 0
+    ) {
 
       state.mouse.down = true;
+
+      state.mouse.downTime =
+        0;
     }
   }
 );
@@ -2513,12 +2587,30 @@ addEventListener(
   "mouseup",
   e => {
 
-    if (e.button === 0) {
+    if (
+      e.button === 0 &&
+      state.mouse.down
+    ) {
+
+      const chargeTime =
+        state.mouse.downTime;
 
       state.mouse.down = false;
+
+      state.mouse.downTime =
+        0;
+
+      playerAttack(
+        chargeTime
+      );
     }
   }
 );
+
+
+// =========================================================
+// DOUBLE-TAP DODGE
+// =========================================================
 
 let lastTap = {
   w: 0,
@@ -2527,37 +2619,6 @@ let lastTap = {
   d: 0
 };
 
-addEventListener(
-  "keydown",
-  e => {
-
-    const k =
-      e.key.toLowerCase();
-
-    if (
-      !"wasd".includes(k) ||
-      e.repeat ||
-      state.screen !== "world"
-    ) {
-
-      return;
-    }
-
-    const now =
-      performance.now();
-
-    if (
-      now - lastTap[k] <
-      280
-    ) {
-
-      startDodge(k);
-    }
-
-    lastTap[k] =
-      now;
-  }
-);
 
 function equip(w) {
 
@@ -2579,14 +2640,17 @@ function equip(w) {
   updateHUD();
 }
 
+
 function startDodge(k) {
 
   if (
-    state.dodgeCooldown > 0
+    state.dodgeCooldown > 0 ||
+    state.dodgeTimer > 0
   ) {
 
     return;
   }
+
 
   const d = {
     w: [0, -1],
@@ -2595,14 +2659,29 @@ function startDodge(k) {
     d: [1, 0]
   }[k];
 
+
+  if (!d) {
+
+    return;
+  }
+
+
   state.dash = {
     x: d[0],
     y: d[1]
   };
 
-  state.dodgeTimer = .16;
 
-  state.dodgeCooldown = 1;
+  // Dodge duration
+
+  state.dodgeTimer =
+    0.16;
+
+
+  // Dodge cooldown
+
+  state.dodgeCooldown =
+    1;
 }
 
 /* =========================================================
@@ -3175,7 +3254,11 @@ function damagePlayer(n) {
   }
 }
 
-function playerAttack() {
+/* =========================================================
+   PLAYER ATTACK
+   ========================================================= */
+
+function playerAttack(chargeTime = 0) {
 
   if (
     state.attackCooldown > 0
@@ -3184,11 +3267,23 @@ function playerAttack() {
     return;
   }
 
+
   const w =
     state.player.weapon;
 
   const item =
     state.player[w];
+
+
+  // ===== WEAPON CHECK =====
+
+  if (
+    !item
+  ) {
+
+    return;
+  }
+
 
   if (
     item.durability <= 0
@@ -3201,29 +3296,23 @@ function playerAttack() {
     return;
   }
 
+
+  // ===== BOW AMMO CHECK =====
+
   if (
-    w === "bow"
+    w === "bow" &&
+    state.player.arrows <= 0
   ) {
 
-    if (
-      state.player.arrows <= 0
-    ) {
+    toast(
+      "No arrows."
+    );
 
-      toast(
-        "No arrows."
-      );
-
-      return;
-    }
-
-    state.player.arrows--;
+    return;
   }
 
-  item.durability =
-    Math.max(
-      0,
-      item.durability - 1
-    );
+
+  // ===== PLAYER POSITION =====
 
   const px =
     state.player.x;
@@ -3231,8 +3320,12 @@ function playerAttack() {
   const py =
     state.player.y;
 
+
+  // ===== AIM AT MOUSE =====
+
   const ang =
     Math.atan2(
+
       state.mouse.y +
         state.camera.y -
         py,
@@ -3242,64 +3335,85 @@ function playerAttack() {
         px
     );
 
-  const range =
+
+  // =========================================================
+  // SWORD
+  // =========================================================
+
+  if (
     w === "sword"
-      ? 75
-      : 600;
-
-  const damage =
-    w === "sword"
-      ? item.power
-      : item.power;
-
-  let hit = false;
-
-  for (
-    const e of state.monsters
   ) {
 
-    const dx =
-      e.x - px;
+    const range =
+      78;
 
-    const dy =
-      e.y - py;
+    const damage =
+      item.power;
 
-    const dist =
-      Math.hypot(
-        dx,
-        dy
-      );
+    let hit = false;
 
-    const a =
-      Math.atan2(
-        dy,
-        dx
-      );
 
-    const da =
-      Math.abs(
-        Math.atan2(
-          Math.sin(
-            a - ang
-          ),
-          Math.cos(
-            a - ang
-          )
-        )
-      );
-
-    if (
-      dist <= range &&
-      da <=
-        (
-          w === "sword"
-            ? 1.0
-            : .14
-        )
+    for (
+      const e of [
+        ...state.monsters
+      ]
     ) {
+
+      const dx =
+        e.x - px;
+
+      const dy =
+        e.y - py;
+
+      const dist =
+        Math.hypot(
+          dx,
+          dy
+        );
+
+
+      if (
+        dist > range
+      ) {
+
+        continue;
+      }
+
+
+      const enemyAngle =
+        Math.atan2(
+          dy,
+          dx
+        );
+
+
+      const angleDifference =
+        Math.abs(
+          Math.atan2(
+            Math.sin(
+              enemyAngle - ang
+            ),
+            Math.cos(
+              enemyAngle - ang
+            )
+          )
+        );
+
+
+      // Sword attack arc
+
+      if (
+        angleDifference >
+        0.9
+      ) {
+
+        continue;
+      }
+
 
       const m =
         MONSTERS[e.type];
+
 
       e.hp =
         Math.max(
@@ -3312,7 +3426,9 @@ function playerAttack() {
           )
         );
 
+
       hit = true;
+
 
       if (
         e.hp <= 0
@@ -3321,18 +3437,179 @@ function playerAttack() {
         killMonster(e);
       }
     }
-  }
 
-  state.attackCooldown =
-    .35;
 
-  if (
-    !hit &&
-    w === "sword"
-  ) {
+    // Sword durability
+
+    item.durability =
+      Math.max(
+        0,
+        item.durability - 1
+      );
+
+
+    // Sword attack cooldown
 
     state.attackCooldown =
-      .25;
+      hit
+        ? 0.35
+        : 0.25;
+
+
+    return;
+  }
+
+
+  // =========================================================
+  // BOW
+  // =========================================================
+
+  if (
+    w === "bow"
+  ) {
+
+    // Consume one arrow
+
+    state.player.arrows--;
+
+
+    const range =
+      600;
+
+    const damage =
+      item.power;
+
+    let target = null;
+
+    let targetDist =
+      Infinity;
+
+
+    // Find the enemy closest
+    // to the mouse aiming direction
+
+    for (
+      const e of [
+        ...state.monsters
+      ]
+    ) {
+
+      const dx =
+        e.x - px;
+
+      const dy =
+        e.y - py;
+
+      const dist =
+        Math.hypot(
+          dx,
+          dy
+        );
+
+
+      if (
+        dist > range
+      ) {
+
+        continue;
+      }
+
+
+      const enemyAngle =
+        Math.atan2(
+          dy,
+          dx
+        );
+
+
+      const angleDifference =
+        Math.abs(
+          Math.atan2(
+            Math.sin(
+              enemyAngle - ang
+            ),
+            Math.cos(
+              enemyAngle - ang
+            )
+          )
+        );
+
+
+      // Narrow bow aiming angle
+
+      if (
+        angleDifference >
+        0.16
+      ) {
+
+        continue;
+      }
+
+
+      if (
+        dist <
+        targetDist
+      ) {
+
+        target =
+          e;
+
+        targetDist =
+          dist;
+      }
+    }
+
+
+    // Hit the first monster
+    // along the arrow direction
+
+    if (
+      target
+    ) {
+
+      const m =
+        MONSTERS[
+          target.type
+        ];
+
+
+      target.hp =
+        Math.max(
+          0,
+          target.hp -
+          Math.max(
+            1,
+            damage -
+            m.def
+          )
+        );
+
+
+      if (
+        target.hp <= 0
+      ) {
+
+        killMonster(target);
+      }
+    }
+
+
+    // Bow durability
+
+    item.durability =
+      Math.max(
+        0,
+        item.durability - 1
+      );
+
+
+    // Bow fires slower than sword
+
+    state.attackCooldown =
+      0.45;
+
+
+    updateHUD();
   }
 }
 
@@ -4770,25 +5047,16 @@ function update(dt) {
     );
 
 
-  // ===== ATTACK =====
+  // ===== CHARGED ATTACK =====
 
-  if (
-    state.mouse.down &&
-    state.player.weapon ===
-      "sword"
-  ) {
+if (
+  state.mouse.down
+) {
 
-    playerAttack();
-  }
+  state.mouse.downTime +=
+    dt;
 
-  if (
-    state.mouse.down &&
-    state.player.weapon ===
-      "bow"
-  ) {
-
-    playerAttack();
-  }
+}
 
 
   // ===== MONSTERS =====
