@@ -4880,7 +4880,7 @@ function update(dt) {
       )
     );
 
- /* =========================================================
+/* =========================================================
    UPDATE
    ========================================================= */
 
@@ -4993,9 +4993,6 @@ function update(dt) {
       dy /= len;
 
 
-      // Normal walking = 220
-      // Shift running = 330
-
       const moveSpeed =
         state.keys.has("shift")
           ? 330
@@ -5013,8 +5010,6 @@ function update(dt) {
         dt;
 
 
-      // ===== LAST DIRECTION =====
-
       state.lastDirection = {
         x: dx,
         y: dy
@@ -5023,7 +5018,7 @@ function update(dt) {
   }
 
 
-  // ===== KEEP PLAYER INSIDE ISLAND =====
+  // ===== ISLAND BOUNDS =====
 
   const b =
     islandBounds();
@@ -5047,16 +5042,15 @@ function update(dt) {
     );
 
 
-  // ===== CHARGED ATTACK =====
+  // ===== CHARGING =====
 
-if (
-  state.mouse.down
-) {
+  if (
+    state.mouse.down
+  ) {
 
-  state.mouse.downTime +=
-    dt;
-
-}
+    state.mouse.downTime +=
+      dt;
+  }
 
 
   // ===== MONSTERS =====
