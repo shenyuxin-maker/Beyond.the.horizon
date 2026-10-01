@@ -4603,6 +4603,163 @@ function update(dt) {
       )
     );
 
+ /* =========================================================
+   UPDATE
+   ========================================================= */
+
+function update(dt) {
+
+  // ===== GAME STATE CHECK =====
+
+  if (
+    state.screen !== "world" ||
+    state.opening ||
+    state.paused ||
+    state.dialogue ||
+    state.shop ||
+    state.dead
+  ) {
+
+    return;
+  }
+
+
+  // ===== NPC ANIMATION =====
+
+  state.npcAnim += dt;
+
+
+  // ===== COMBAT COOLDOWNS =====
+
+  state.attackCooldown =
+    Math.max(
+      0,
+      state.attackCooldown - dt
+    );
+
+  state.dodgeCooldown =
+    Math.max(
+      0,
+      state.dodgeCooldown - dt
+    );
+
+
+  // ===== DODGE =====
+
+  if (
+    state.dodgeTimer > 0
+  ) {
+
+    state.player.x +=
+      state.dash.x *
+      600 *
+      dt;
+
+    state.player.y +=
+      state.dash.y *
+      600 *
+      dt;
+
+    state.dodgeTimer -=
+      dt;
+
+  } else {
+
+    // ===== NORMAL MOVEMENT =====
+
+    let dx = 0;
+    let dy = 0;
+
+    if (
+      state.keys.has("w")
+    ) {
+
+      dy--;
+    }
+
+    if (
+      state.keys.has("s")
+    ) {
+
+      dy++;
+    }
+
+    if (
+      state.keys.has("a")
+    ) {
+
+      dx--;
+    }
+
+    if (
+      state.keys.has("d")
+    ) {
+
+      dx++;
+    }
+
+
+    // ===== MOVEMENT SPEED =====
+
+    if (
+      dx ||
+      dy
+    ) {
+
+      const len =
+        Math.hypot(
+          dx,
+          dy
+        );
+
+      dx /= len;
+      dy /= len;
+
+
+      // Normal walking = 220
+      // Shift running = 330
+
+      const moveSpeed =
+        state.keys.has("shift")
+          ? 330
+          : 220;
+
+
+      state.player.x +=
+        dx *
+        moveSpeed *
+        dt;
+
+      state.player.y +=
+        dy *
+        moveSpeed *
+        dt;
+
+
+      // ===== LAST DIRECTION =====
+
+      state.lastDirection = {
+        x: dx,
+        y: dy
+      };
+    }
+  }
+
+
+  // ===== KEEP PLAYER INSIDE ISLAND =====
+
+  const b =
+    islandBounds();
+
+  state.player.x =
+    Math.max(
+      35,
+      Math.min(
+        b.w - 35,
+        state.player.x
+      )
+    );
+
   state.player.y =
     Math.max(
       35,
@@ -4611,6 +4768,9 @@ function update(dt) {
         state.player.y
       )
     );
+
+
+  // ===== ATTACK =====
 
   if (
     state.mouse.down &&
@@ -4630,9 +4790,18 @@ function update(dt) {
     playerAttack();
   }
 
+
+  // ===== MONSTERS =====
+
   updateMonsters(dt);
 
+
+  // ===== INTERACTION =====
+
   checkInteraction();
+
+
+  // ===== GAME TIME =====
 
   state.dayAccumulator +=
     dt;
@@ -4647,6 +4816,9 @@ function update(dt) {
 
     advanceTime(1);
   }
+
+
+  // ===== HUD =====
 
   updateHUD();
 }
